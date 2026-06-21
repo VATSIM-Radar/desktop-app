@@ -1,29 +1,52 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
-import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
-import { MakerZIP } from '@electron-forge/maker-zip';
+import VitePlugin from '@electron-forge/plugin-vite';
+import { version } from './package.json' with { type: 'json' };
 
 const config: ForgeConfig = {
     packagerConfig: {
         asar: true,
-        name: 'vatsim-radar-desktop',
-        executableName: 'vatsim-radar-desktop',
+        name: 'VATSIM Radar',
+        executableName: 'vatsim-radar',
         overwrite: true,
         prune: false,
+        icon: './src/assets/icon.png',
     },
     outDir: 'out',
     buildIdentifier: 'test',
     rebuildConfig: {
         force: true,
     },
+    plugins: [
+        new VitePlugin({
+            build: [
+                {
+                    entry: 'src/app.ts',
+                    config: 'vite.main.config.ts',
+                    target: 'main',
+                },
+            ],
+            renderer: [
+                {
+                    name: 'main_window',
+                    config: 'vite.renderer.config.ts',
+                },
+            ],
+        }),
+    ],
     makers: [
         new MakerSquirrel({
-            description: 'VR Desktop',
-            authors: 'Electron contributors',
+            title: 'VATSIM Radar',
+            name: 'VATSIM Radar',
+            description: 'VATSIM Radar',
+            authors: 'Danila Rodichkin, VATSIM Radar Contributors',
+            owners: 'Danila Rodichkin',
+            iconUrl: 'https://next.vatsim-radar.com/web-app-manifest-192x192.png',
+            version,
         }),
         // new MakerZIP({}, ['darwin']),
         // new MakerDeb({}, ['linux']),
-    ]
+    ],
 };
 
 export default config;

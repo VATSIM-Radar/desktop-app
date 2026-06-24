@@ -1,10 +1,12 @@
 import * as Squirell from 'electron-squirrel-startup';
-import type { WebContents } from 'electron';
-import { app, shell, BrowserWindow, WebContentsView } from 'electron';
-import { addTray } from './utils/tray';
-import { nativeImage } from 'electron/common';
-import { store } from './utils/store';
+import type {WebContents} from 'electron';
+import {app, shell, BrowserWindow, WebContentsView, ipcMain} from 'electron';
+import {addTray} from './utils/tray';
+import {nativeImage} from 'electron/common';
+import {store} from './utils/store';
 import * as path from 'node:path';
+import {getNavigraphAuthUrl, getVatsimAuthUrl} from "./utils/auth";
+import {initDiscord} from "./utils/server";
 
 // @ts-expect-error Non-esm
 if (Squirell.default) {
@@ -17,31 +19,14 @@ let mainWebContents: WebContents | undefined;
 let pendingAuthUrl: string | undefined;
 let currentAuthUrl: string | undefined;
 
-const getVatsimAuthUrl = (deepLink: string): string | undefined => {
-    try {
-        const url = new URL(deepLink);
-
-        if (url.protocol !== 'vatsim-radar:' || url.hostname || url.pathname !== '/auth/vatsim') {
-            return;
-        }
-
-        const authUrl = new URL('/api/auth/vatsim', domain);
-        authUrl.search = url.search;
-        return authUrl.toString();
-    }
-    catch {
-        return;
-    }
-};
-
-const openVatsimAuth = (deepLink: string) => {
-    const authUrl = getVatsimAuthUrl(deepLink);
+const handleDeeplinkAuth = (deepLink: string) => {
+    const authUrl = getVatsimAuthUrl(deepLink) ?? getNavigraphAuthUrl(deepLink);
     if (!authUrl || authUrl === currentAuthUrl) return;
 
     currentAuthUrl = authUrl;
 
     if (mainWebContents) {
-        mainWebContents.loadURL(`${ authUrl }&webview=1`);
+        mainWebContents.loadURL(authUrl);
         return;
     }
 
@@ -52,8 +37,7 @@ if (process.defaultApp) {
     if (process.argv.length >= 2) {
         app.setAsDefaultProtocolClient('vatsim-radar', process.execPath, [path.resolve(process.argv[1])]);
     }
-}
-else {
+} else {
     app.setAsDefaultProtocolClient('vatsim-radar');
 }
 
@@ -65,7 +49,7 @@ if (!hasSingleInstanceLock) {
 if (hasSingleInstanceLock) {
     app.on('second-instance', (_event, commandLine) => {
         const deepLink = commandLine.find(argument => argument.startsWith('vatsim-radar:'));
-        if (deepLink) openVatsimAuth(deepLink);
+        if (deepLink) handleDeeplinkAuth(deepLink);
 
         const win = BrowserWindow.getAllWindows()[0];
         if (win?.isMinimized()) win.restore();
@@ -74,11 +58,11 @@ if (hasSingleInstanceLock) {
 
     app.on('open-url', (event, url) => {
         event.preventDefault();
-        openVatsimAuth(url);
+        handleDeeplinkAuth(url);
     });
 
     const startupDeepLink = process.argv.find(argument => argument.startsWith('vatsim-radar:'));
-    if (startupDeepLink) openVatsimAuth(startupDeepLink);
+    if (startupDeepLink) handleDeeplinkAuth(startupDeepLink);
 }
 
 const createWindow = async () => {
@@ -92,7 +76,7 @@ const createWindow = async () => {
         tabbingIdentifier: 'vatsim-radar',
         webPreferences: {
             devTools: true,
-            nodeIntegration: true,
+            nodeIntegration: false,
         },
         width: store.get('width') || 640,
         height: store.get('height') || 360,
@@ -109,24 +93,25 @@ const createWindow = async () => {
     const mainView = new WebContentsView({
         webPreferences: {
             partition: 'persist:main',
+            preload: path.join(__dirname, 'preload.js'),
         },
     });
     mainWebContents = mainView.webContents;
 
     win.contentView.addChildView(mainView);
 
-    mainView.webContents.setWindowOpenHandler(({ url }) => {
+    mainView.webContents.setWindowOpenHandler(({url}) => {
         if (!url.startsWith(domain)) {
             shell.openExternal(url);
-            return { action: 'deny' };
+            return {action: 'deny'};
         }
 
-        return { action: 'allow' };
+        return {action: 'allow'};
     });
 
     mainView.webContents.on('will-navigate', (event => {
         if (event.url.includes('/redirect')) {
-            shell.openExternal(`${ event.url }?app=1`);
+            shell.openExternal(`${event.url}?app=1`);
             event.preventDefault();
         }
 
@@ -139,20 +124,28 @@ const createWindow = async () => {
 
     const initialUrl = pendingAuthUrl ?? domain;
     pendingAuthUrl = undefined;
-    await mainView.webContents.loadURL(initialUrl);
+
+    let loadError = false
+
+    try {
+        await mainView.webContents.loadURL(initialUrl);
+    } catch (e) {
+        loadError = true
+        await mainView.webContents.loadFile('./src/assets/offline.html')
+    }
 
     const size = win.getSize();
-    mainView.setBounds({ x: 0, y: 0, width: size[0], height: size[1] });
+    mainView.setBounds({x: 0, y: 0, width: size[0], height: size[1]});
 
     function storeWindowState() {
         const [width, height] = win.getSize();
         const [x, y] = win.getPosition();
-        store.set({ width, height, x, y, maximized: win.isMaximized() });
+        store.set({width, height, x, y, maximized: win.isMaximized()});
     }
 
     win.on('resize', () => {
         const size = win.getSize();
-        mainView.setBounds({ x: 0, y: 0, width: size[0], height: size[1] });
+        mainView.setBounds({x: 0, y: 0, width: size[0], height: size[1]});
     });
 
     win.on('resized', storeWindowState);
@@ -172,23 +165,14 @@ if (hasSingleInstanceLock) {
         // having this listener active will prevent the app from quitting.
     });
 
-    app.on('activate', function() {
+    app.on('activate', function () {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
 }
 
-/* const client = new DiscordRpcClient({
-    clientId: '1229876151602905220',
-});
+ipcMain.on('reload', () => {
+    BrowserWindow.getAllWindows().forEach(x => x.destroy());
+    createWindow();
+})
 
-client.on('ready', async () => {
-    await client.user?.setActivity({
-        name: 'VATSIM',
-        details: 'Flying across',
-        state: 'Watching traffic',
-    });
-});
-
-if (hasSingleInstanceLock) {
-    client.login();
-}*/
+initDiscord();

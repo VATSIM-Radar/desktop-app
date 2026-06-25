@@ -5,8 +5,8 @@ import { addTray } from './utils/tray';
 import { nativeImage } from 'electron/common';
 import { store } from './utils/store';
 import * as path from 'node:path';
-import { appendFileSync, mkdirSync } from 'node:fs';
 import { getNavigraphAuthUrl, getVatsimAuthUrl } from './utils/auth';
+import { logAutoUpdate } from './utils/auto-updater-log';
 import { initDiscord } from './utils/server';
 
 // @ts-expect-error Non-esm
@@ -38,28 +38,10 @@ if (process.platform === 'win32') {
     app.setAppUserModelId(appUserModelId);
 }
 
-const logAutoUpdate = (level: 'error' | 'info' | 'warn', ...messages: unknown[]) => {
-    try {
-        const logsPath = app.getPath('logs');
-        mkdirSync(logsPath, { recursive: true });
-
-        const line = [
-            new Date().toISOString(),
-            level.toUpperCase(),
-            ...messages.map(message => message instanceof Error ? message.stack ?? message.message : JSON.stringify(message)),
-        ].join(' ');
-
-        appendFileSync(path.join(logsPath, 'auto-updater.log'), `${ line }\n`);
-    }
-    catch {
-        // Update logging should never prevent the app from opening.
-    }
-};
-
 const initAutoUpdates = () => {
     const updateFeedBaseUrl = `${ updateBaseUrl }/${ process.platform }/${ process.arch }`;
 
-    logAutoUpdate('info', 'init', {
+    logAutoUpdate(app, 'info', 'init', {
         appVersion: app.getVersion(),
         isPackaged: app.isPackaged,
         platform: process.platform,
@@ -67,12 +49,12 @@ const initAutoUpdates = () => {
         updateFeedBaseUrl,
     });
 
-    autoUpdater.on('error', error => logAutoUpdate('error', 'error', error));
-    autoUpdater.on('checking-for-update', () => logAutoUpdate('info', 'checking-for-update'));
-    autoUpdater.on('update-available', () => logAutoUpdate('info', 'update-available'));
-    autoUpdater.on('update-not-available', () => logAutoUpdate('info', 'update-not-available'));
+    autoUpdater.on('error', error => logAutoUpdate(app, 'error', 'error', error));
+    autoUpdater.on('checking-for-update', () => logAutoUpdate(app, 'info', 'checking-for-update'));
+    autoUpdater.on('update-available', () => logAutoUpdate(app, 'info', 'update-available'));
+    autoUpdater.on('update-not-available', () => logAutoUpdate(app, 'info', 'update-not-available'));
     autoUpdater.on('update-downloaded', (_event, releaseNotes, releaseName, releaseDate, updateUrl) => {
-        logAutoUpdate('info', 'update-downloaded', {
+        logAutoUpdate(app, 'info', 'update-downloaded', {
             releaseNotes,
             releaseName,
             releaseDate,
@@ -86,10 +68,10 @@ const initAutoUpdates = () => {
             baseUrl: updateFeedBaseUrl,
         },
         logger: {
-            log: (...messages: unknown[]) => logAutoUpdate('info', ...messages),
-            info: (...messages: unknown[]) => logAutoUpdate('info', ...messages),
-            error: (...messages: unknown[]) => logAutoUpdate('error', ...messages),
-            warn: (...messages: unknown[]) => logAutoUpdate('warn', ...messages),
+            log: (...messages: unknown[]) => logAutoUpdate(app, 'info', ...messages),
+            info: (...messages: unknown[]) => logAutoUpdate(app, 'info', ...messages),
+            error: (...messages: unknown[]) => logAutoUpdate(app, 'error', ...messages),
+            warn: (...messages: unknown[]) => logAutoUpdate(app, 'warn', ...messages),
         },
     });
 };

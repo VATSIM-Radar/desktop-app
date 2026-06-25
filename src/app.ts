@@ -1,5 +1,6 @@
 import * as Squirell from 'electron-squirrel-startup';
-import { app, shell, BrowserWindow, ipcMain, autoUpdater } from 'electron';
+import { app, shell, BrowserWindow, ipcMain } from 'electron';
+import { updateElectronApp, UpdateSourceType } from 'update-electron-app';
 import { addTray } from './utils/tray';
 import { nativeImage } from 'electron/common';
 import { store } from './utils/store';
@@ -13,7 +14,9 @@ if (Squirell.default) {
 }
 
 const domain = process.env.VITE_DOMAIN!;
-const appDisplayName = domain.includes('next.') ? 'VATSIM Radar Next' : 'VATSIM Radar';
+const isNextRelease = domain.includes('next.');
+const updateBaseUrl = process.env.VITE_UPDATE_BASE_URL ?? `https://r2.vatsim-radar.com/app/${ isNextRelease ? 'next' : 'prod' }`;
+const appDisplayName = isNextRelease ? 'VATSIM Radar Next' : 'VATSIM Radar';
 const appUserModelId = 'com.squirrel.vatsim_radar_desktop.vatsim-radar';
 const getAssetPath = (...parts: string[]) => {
     return app.isPackaged
@@ -35,18 +38,18 @@ if (process.platform === 'win32') {
 }
 
 const initAutoUpdates = () => {
-    const updateFeedUrl = `https://update.electronjs.org/VATSIM-Radar/desktop-app/${ process.platform }-${ process.arch }/${ app.getVersion() }`;
-
-    if (!app.isPackaged || !['darwin', 'win32'].includes(process.platform)) return;
-
-    autoUpdater.setFeedURL({
-        url: updateFeedUrl,
+    updateElectronApp({
+        updateSource: {
+            type: UpdateSourceType.StaticStorage,
+            baseUrl: `${ updateBaseUrl }/${ process.platform }/${ process.arch }`,
+        },
+        logger: {
+            log: () => undefined,
+            info: () => undefined,
+            error: () => undefined,
+            warn: () => undefined,
+        },
     });
-    autoUpdater.on('error', () => {
-        // Update checks should never prevent the web wrapper from opening.
-    });
-    autoUpdater.checkForUpdates();
-    setInterval(() => autoUpdater.checkForUpdates(), 10 * 60 * 1000);
 };
 
 const notifyVisibilityChange = (win: BrowserWindow) => {

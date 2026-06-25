@@ -9,6 +9,7 @@ export default ({ mode }) => {
     return defineConfig({
         define: {
             'process.env.VITE_DOMAIN': JSON.stringify(process.env.VITE_DOMAIN),
+            'process.env.VITE_UPDATE_BASE_URL': JSON.stringify(process.env.VITE_UPDATE_BASE_URL),
         },
     });
 };

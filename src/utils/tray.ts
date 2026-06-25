@@ -1,6 +1,5 @@
 import type { App } from 'electron';
-import { BrowserWindow, Menu, Tray } from 'electron';
-import { nativeImage } from 'electron/common';
+import { BrowserWindow, Menu, Tray, nativeImage } from 'electron';
 import * as path from 'node:path';
 
 let tray: Tray | undefined;
@@ -12,7 +11,12 @@ const getAssetPath = (app: App, ...parts: string[]) => {
 };
 
 export function addTray(app: App, createWindow: () => any) {
-    const icon = nativeImage.createFromPath(getAssetPath(app, 'tray-icon.png'));
+    const iconPath = getAssetPath(app, process.platform === 'win32' ? 'favicon.ico' : 'tray-icon.png');
+    const icon = nativeImage.createFromPath(iconPath);
+    if (icon.isEmpty()) {
+        throw new Error(`Failed to load tray icon: ${ iconPath }`);
+    }
+
     tray = new Tray(icon);
 
     function openRadar() {

@@ -13,6 +13,7 @@ if (Squirell.default) {
 }
 
 const domain = process.env.VITE_DOMAIN!;
+const appDisplayName = domain.includes('next.') ? 'VATSIM Radar Next' : 'VATSIM Radar';
 const appUserModelId = 'com.squirrel.vatsim_radar_desktop.vatsim-radar';
 const getAssetPath = (...parts: string[]) => {
     return app.isPackaged
@@ -26,6 +27,8 @@ let pendingAuthUrl: string | undefined;
 let currentAuthUrl: string | undefined;
 let isQuitting = false;
 let isMainWindowVisible: boolean | undefined;
+
+app.setName(appDisplayName);
 
 if (process.platform === 'win32') {
     app.setAppUserModelId(appUserModelId);
@@ -120,7 +123,7 @@ if (hasSingleInstanceLock) {
 const createWindow = async () => {
     const win = new BrowserWindow({
         show: false,
-        title: 'VATSIM Radar',
+        title: appDisplayName,
         accentColor: '#1A1A1A',
         backgroundColor: '#1A1A1A',
         autoHideMenuBar: true,

@@ -12,6 +12,7 @@ const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { versio
 const releaseChannel = process.env.RELEASE_CHANNEL === 'next' ? 'next' : 'prod';
 const isNextRelease = releaseChannel === 'next';
 const appDomain = process.env.VITE_DOMAIN ?? (isNextRelease ? 'https://next.vatsim-radar.com' : 'https://vatsim-radar.com');
+const appDisplayName = isNextRelease ? 'VATSIM Radar Next' : 'VATSIM Radar';
 
 const getArtifactName = (artifactPath: string, platform: string, arch: string) => {
     const extension = extname(artifactPath);
@@ -27,7 +28,7 @@ const getArtifactName = (artifactPath: string, platform: string, arch: string) =
 const config: ForgeConfig = {
     packagerConfig: {
         asar: true,
-        name: 'VATSIM Radar',
+        name: appDisplayName,
         executableName: 'vatsim-radar',
         overwrite: true,
         prune: false,
@@ -58,8 +59,8 @@ const config: ForgeConfig = {
     makers: [
         new MakerSquirrel({
             name: 'vatsim_radar_desktop',
-            title: 'VATSIM Radar',
-            description: 'VATSIM Radar',
+            title: appDisplayName,
+            description: appDisplayName,
             authors: 'Danila Rodichkin, VATSIM Radar Contributors',
             owners: 'Danila Rodichkin',
             iconUrl: `${ appDomain }/favicon.ico`,
@@ -68,7 +69,7 @@ const config: ForgeConfig = {
             version,
         }, ['win32']),
         new MakerDMG({
-            name: `VATSIM Radar-${ version }`,
+            name: `${ appDisplayName }-${ version }`,
             icon: process.env.MAC_INSTALLER_ICON ?? join('src', 'assets', 'icon.png'),
             format: 'ULFO',
         }, ['darwin']),
@@ -76,10 +77,10 @@ const config: ForgeConfig = {
         new MakerDeb({
             options: {
                 name: 'vatsim-radar',
-                productName: 'VATSIM Radar',
-                genericName: 'VATSIM Radar',
-                description: 'VATSIM Radar desktop application',
-                productDescription: 'Desktop wrapper for VATSIM Radar.',
+                productName: appDisplayName,
+                genericName: appDisplayName,
+                description: `${ appDisplayName } desktop application`,
+                productDescription: `Desktop wrapper for ${ appDisplayName }.`,
                 maintainer: 'Danila Rodichkin',
                 homepage: appDomain,
                 bin: 'vatsim-radar',

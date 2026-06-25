@@ -30,7 +30,7 @@ export function addTray(app: App, createWindow: () => any) {
 
     const contextMenu = Menu.buildFromTemplate([
         {
-            label: 'Open VATSIM Radar',
+            label: `Open ${ app.getName() }`,
             click: openRadar,
         },
         { label: 'Exit', role: 'quit' },

@@ -27,6 +27,14 @@ const getArtifactName = (artifactPath: string, platform: string, arch: string) =
     return undefined;
 };
 
+process.on('exit', code => {
+    console.log('>>> PROCESS EXIT', code);
+});
+
+process.on('beforeExit', code => {
+    console.log('>>> PROCESS BEFORE EXIT', code);
+});
+
 const config: ForgeConfig = {
     packagerConfig: {
         asar: true,
@@ -34,20 +42,12 @@ const config: ForgeConfig = {
         executableName: 'vatsim-radar',
         overwrite: true,
         prune: false,
-        // icon: packagerIcon,
-        // extraResource: ['./src/assets'],
+        icon: packagerIcon,
+        extraResource: ['./src/assets'],
     },
     outDir: 'out',
     rebuildConfig: {
         force: true,
-    },
-    hooks: {
-        preMake: async () => {
-            console.log('>>> preMake');
-        },
-        postMake: async (_config, results) => {
-            console.log('>>> postMake', results);
-        },
     },
     plugins: [
         new VitePlugin({
@@ -99,7 +99,16 @@ const config: ForgeConfig = {
         }),
     ],
     hooks: {
+        postPackage: async (_config, result) => {
+            console.log('>>> postPackage', result);
+            return result;
+        },
+        preMake: async () => {
+            console.log('>>> preMake');
+        },
         postMake: async (_config, makeResults) => {
+            console.log('>>> postMake', makeResults);
+
             for (const makeResult of makeResults) {
                 makeResult.artifacts = makeResult.artifacts.map(artifactPath => {
                     const artifactName = getArtifactName(artifactPath, makeResult.platform, makeResult.arch);

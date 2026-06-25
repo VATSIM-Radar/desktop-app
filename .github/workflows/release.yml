@@ -105,7 +105,16 @@ jobs:
       - name: Generate macOS icon
         if: matrix.platform == 'darwin'
         shell: bash
-        run: sips -s format icns src/assets/icon.png --out src/assets/icon.icns
+        run: |
+          mkdir -p src/assets/icon.iconset
+
+          for size in 16 32 128 256 512; do
+            sips -z "$size" "$size" src/assets/icon.png --out "src/assets/icon.iconset/icon_${size}x${size}.png"
+            retina_size=$((size * 2))
+            sips -z "$retina_size" "$retina_size" src/assets/icon.png --out "src/assets/icon.iconset/icon_${size}x${size}@2x.png"
+          done
+
+          iconutil -c icns src/assets/icon.iconset -o src/assets/icon.icns
 
       - name: Publish
         env:

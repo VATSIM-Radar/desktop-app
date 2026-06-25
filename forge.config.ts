@@ -34,8 +34,8 @@ const config: ForgeConfig = {
         executableName: 'vatsim-radar',
         overwrite: true,
         prune: false,
-        icon: packagerIcon,
-        extraResource: ['./src/assets'],
+        // icon: packagerIcon,
+        // extraResource: ['./src/assets'],
     },
     outDir: 'out',
     rebuildConfig: {

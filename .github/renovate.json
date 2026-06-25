@@ -4,6 +4,6 @@
     "VATSIM-Radar/vatsim-radar"
   ],
   "baseBranches": [
-    "main"
+    "master"
   ]
 }

@@ -38,7 +38,6 @@ const config: ForgeConfig = {
         extraResource: ['./src/assets'],
     },
     outDir: 'out',
-    buildIdentifier: 'test',
     rebuildConfig: {
         force: true,
     },

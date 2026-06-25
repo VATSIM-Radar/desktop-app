@@ -117,7 +117,9 @@ jobs:
           iconutil -c icns src/assets/icon.iconset -o src/assets/icon.icns
 
       - name: Make
-        run: yarn make --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
+        env:
+          DEBUG: electron-forge:*
+        run: yarn electron-forge make --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
 
       - name: Collect release files
         shell: bash

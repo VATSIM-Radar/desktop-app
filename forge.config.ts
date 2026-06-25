@@ -17,7 +17,7 @@ const appDisplayName = isNextRelease ? 'VATSIM Radar Next' : 'VATSIM Radar';
 const getArtifactName = (artifactPath: string, platform: string, arch: string) => {
     const extension = extname(artifactPath);
 
-    if (extension === '.exe') return 'vatsim-radar-setup.exe';
+    if (extension === '.exe') return `vatsim-radar-${ platform }-${ arch }.exe`;
     if (extension === '.dmg') return `vatsim-radar-${ platform }-${ arch }.dmg`;
     if (extension === '.deb') return `vatsim-radar-${ platform }-${ arch }.deb`;
     if (extension === '.zip') return `vatsim-radar-${ platform }-${ arch }.zip`;
@@ -65,7 +65,7 @@ const config: ForgeConfig = {
             owners: 'Danila Rodichkin',
             iconUrl: `${ appDomain }/favicon.ico`,
             setupIcon: join('src', 'assets', 'favicon.ico'),
-            setupExe: 'vatsim-radar-setup.exe',
+            setupExe: 'vatsim-radar-win32-x64.exe',
             version,
         }, ['win32']),
         new MakerDMG({

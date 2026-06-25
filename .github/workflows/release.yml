@@ -32,8 +32,8 @@ jobs:
     name: Build ${{ matrix.platform }} ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
-      max-parallel: 1
+      fail-fast: true
+      max-parallel: 5
       matrix:
         include:
           - os: windows-latest
@@ -111,7 +111,7 @@ jobs:
           mkdir -p release-assets
           find out \
             -type f \( \
-              -name 'vatsim-radar-setup.exe' -o \
+              -name 'vatsim-radar-win32-*.exe' -o \
               -name 'vatsim-radar-*.dmg' -o \
               -name 'vatsim-radar-*.deb' -o \
               -name 'vatsim-radar-*.zip' -o \
@@ -198,6 +198,7 @@ jobs:
             echo "### Update feeds"
             echo
             echo "- [Windows x64](https://update.electronjs.org/${{ github.repository }}/win32-x64/${version})"
+            echo "- [Windows x64 RELEASES](https://update.electronjs.org/${{ github.repository }}/win32-x64/${version}/RELEASES)"
             echo "- [macOS x64](https://update.electronjs.org/${{ github.repository }}/darwin-x64/${version})"
             echo "- [macOS arm64](https://update.electronjs.org/${{ github.repository }}/darwin-arm64/${version})"
           } >> "$GITHUB_STEP_SUMMARY"

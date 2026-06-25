@@ -35,9 +35,9 @@ if (process.platform === 'win32') {
 }
 
 const initAutoUpdates = () => {
-    if (!app.isPackaged || !['darwin', 'win32'].includes(process.platform)) return;
-
     const updateFeedUrl = `https://update.electronjs.org/VATSIM-Radar/desktop-app/${ process.platform }-${ process.arch }/${ app.getVersion() }`;
+
+    if (!app.isPackaged || !['darwin', 'win32'].includes(process.platform)) return;
 
     autoUpdater.setFeedURL({
         url: updateFeedUrl,

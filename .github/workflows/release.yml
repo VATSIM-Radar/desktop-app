@@ -105,6 +105,13 @@ jobs:
       - name: Make
         run: yarn electron-forge make --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
 
+      - name: Verify macOS signature
+        if: matrix.platform == 'darwin'
+        run: |
+          app_path="$(find out -maxdepth 2 -type d -name '*.app' | head -n 1)"
+          test -n "$app_path"
+          codesign --verify --deep --strict --verbose=2 "$app_path"
+
       - name: Collect release files
         run: |
           cd "$GITHUB_WORKSPACE"

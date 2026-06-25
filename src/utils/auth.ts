@@ -8,6 +8,7 @@ export const getVatsimAuthUrl = (deepLink: string): string | undefined => {
 
         const authUrl = new URL('/api/auth/vatsim', process.env.VITE_DOMAIN!);
         authUrl.search = url.search;
+        authUrl.searchParams.set('webview', '1');
         return authUrl.toString();
     }
     catch {

@@ -1,12 +1,12 @@
 import * as Squirell from 'electron-squirrel-startup';
-import type {WebContents} from 'electron';
-import {app, shell, BrowserWindow, WebContentsView, ipcMain} from 'electron';
-import {addTray} from './utils/tray';
-import {nativeImage} from 'electron/common';
-import {store} from './utils/store';
+import { app, shell, BrowserWindow, ipcMain } from 'electron';
+import { addTray } from './utils/tray';
+import { nativeImage } from 'electron/common';
+import { store } from './utils/store';
 import * as path from 'node:path';
-import {getNavigraphAuthUrl, getVatsimAuthUrl} from "./utils/auth";
-import {initDiscord} from "./utils/server";
+import { getNavigraphAuthUrl, getVatsimAuthUrl } from './utils/auth';
+import { initDiscord } from './utils/server';
+import { version } from '../package.json' with { type: 'json' };
 
 // @ts-expect-error Non-esm
 if (Squirell.default) {
@@ -14,10 +14,47 @@ if (Squirell.default) {
 }
 
 const domain = process.env.VITE_DOMAIN!;
-const icon = nativeImage.createFromPath('./src/assets/icon.png');
-let mainWebContents: WebContents | undefined;
+const appUserModelId = 'com.squirrel.vatsim_radar_desktop.vatsim-radar';
+const getAssetPath = (...parts: string[]) => {
+    return app.isPackaged
+        ? path.join(process.resourcesPath, 'assets', ...parts)
+        : path.join(app.getAppPath(), 'src', 'assets', ...parts);
+};
+
+const icon = nativeImage.createFromPath(getAssetPath(process.platform === 'win32' ? 'favicon.ico' : 'icon.png'));
+let mainWindow: BrowserWindow | undefined;
 let pendingAuthUrl: string | undefined;
 let currentAuthUrl: string | undefined;
+let isQuitting = false;
+let isMainWindowVisible: boolean | undefined;
+
+if (process.platform === 'win32') {
+    app.setAppUserModelId(appUserModelId);
+}
+
+const notifyVisibilityChange = (win: BrowserWindow) => {
+    if (win.isDestroyed()) return;
+
+    const isVisible = win.isVisible() && !win.isMinimized();
+    if (isMainWindowVisible === isVisible) return;
+
+    isMainWindowVisible = isVisible;
+    win.webContents.send('efbX', isVisible ? 'resume' : 'pause');
+};
+
+const loadAppUrl = (win: BrowserWindow, url: string) => {
+    return win.loadURL(url, {
+        extraHeaders: `radarWebview: ${ version }
+`,
+    });
+};
+
+const showWindow = (win: BrowserWindow) => {
+    if (win.isDestroyed()) return;
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+};
 
 const handleDeeplinkAuth = (deepLink: string) => {
     const authUrl = getVatsimAuthUrl(deepLink) ?? getNavigraphAuthUrl(deepLink);
@@ -25,8 +62,9 @@ const handleDeeplinkAuth = (deepLink: string) => {
 
     currentAuthUrl = authUrl;
 
-    if (mainWebContents) {
-        mainWebContents.loadURL(authUrl);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        loadAppUrl(mainWindow, authUrl);
+        showWindow(mainWindow);
         return;
     }
 
@@ -37,7 +75,8 @@ if (process.defaultApp) {
     if (process.argv.length >= 2) {
         app.setAsDefaultProtocolClient('vatsim-radar', process.execPath, [path.resolve(process.argv[1])]);
     }
-} else {
+}
+else {
     app.setAsDefaultProtocolClient('vatsim-radar');
 }
 
@@ -52,8 +91,7 @@ if (hasSingleInstanceLock) {
         if (deepLink) handleDeeplinkAuth(deepLink);
 
         const win = BrowserWindow.getAllWindows()[0];
-        if (win?.isMinimized()) win.restore();
-        win?.focus();
+        if (win) showWindow(win);
     });
 
     app.on('open-url', (event, url) => {
@@ -77,6 +115,9 @@ const createWindow = async () => {
         webPreferences: {
             devTools: true,
             nodeIntegration: false,
+            contextIsolation: true,
+            partition: 'persist:main',
+            preload: path.join(__dirname, 'preload.js'),
         },
         width: store.get('width') || 640,
         height: store.get('height') || 360,
@@ -85,33 +126,39 @@ const createWindow = async () => {
         icon,
     });
 
+    mainWindow = win;
+
+    win.on('close', event => {
+        if (store.get('tray') === true && !isQuitting) {
+            event.preventDefault();
+            win.hide();
+        }
+    });
+
+    win.on('closed', () => {
+        if (mainWindow === win) mainWindow = undefined;
+        isMainWindowVisible = undefined;
+    });
+
     if (!store.get('width') || store.get('maximized')) {
         win.maximize();
     }
     win.show();
 
-    const mainView = new WebContentsView({
-        webPreferences: {
-            partition: 'persist:main',
-            preload: path.join(__dirname, 'preload.js'),
-        },
-    });
-    mainWebContents = mainView.webContents;
-
-    win.contentView.addChildView(mainView);
-
-    mainView.webContents.setWindowOpenHandler(({url}) => {
+    win.webContents.setWindowOpenHandler(({ url }) => {
         if (!url.startsWith(domain)) {
             shell.openExternal(url);
-            return {action: 'deny'};
+            return { action: 'deny' };
         }
 
-        return {action: 'allow'};
+        return { action: 'allow' };
     });
 
-    mainView.webContents.on('will-navigate', (event => {
+    win.webContents.on('will-navigate', (event => {
+        if (event.url.startsWith('file://')) return;
+
         if (event.url.includes('/redirect')) {
-            shell.openExternal(`${event.url}?app=1`);
+            shell.openExternal(`${ event.url }?app=1`);
             event.preventDefault();
         }
 
@@ -122,36 +169,72 @@ const createWindow = async () => {
         }
     }));
 
-    const initialUrl = pendingAuthUrl ?? domain;
-    pendingAuthUrl = undefined;
+    const storeLastUrl = (url: string) => {
+        if (url.startsWith(domain)) store.set('lastUrl', url);
+    };
 
-    let loadError = false
-
-    try {
-        await mainView.webContents.loadURL(initialUrl);
-    } catch (e) {
-        loadError = true
-        await mainView.webContents.loadFile('./src/assets/offline.html')
-    }
-
-    const size = win.getSize();
-    mainView.setBounds({x: 0, y: 0, width: size[0], height: size[1]});
-
-    function storeWindowState() {
-        const [width, height] = win.getSize();
-        const [x, y] = win.getPosition();
-        store.set({width, height, x, y, maximized: win.isMaximized()});
-    }
-
-    win.on('resize', () => {
-        const size = win.getSize();
-        mainView.setBounds({x: 0, y: 0, width: size[0], height: size[1]});
+    win.webContents.on('did-navigate', (_event, url) => {
+        storeLastUrl(url);
     });
 
+    win.webContents.on('did-navigate-in-page', (_event, url, isMainFrame) => {
+        if (isMainFrame) storeLastUrl(url);
+    });
+
+    win.webContents.on('before-input-event', (event, input) => {
+        const isSystemReload = input.type === 'keyDown' && (
+            (input.key === 'F5' && (input.control || input.meta)) ||
+            ((input.control || input.meta) && input.shift && input.key.toLowerCase() === 'r')
+        );
+
+        if (!isSystemReload) return;
+
+        event.preventDefault();
+        store.delete('lastUrl');
+        void loadAppUrl(win, domain);
+    });
+
+    const initialUrl = pendingAuthUrl ?? store.get('lastUrl') ?? domain;
+    pendingAuthUrl = undefined;
+
+    try {
+        await loadAppUrl(win, initialUrl);
+    }
+    catch {
+        await win.loadFile(getAssetPath('offline.html'));
+    }
+    notifyVisibilityChange(win);
+
+    let storeWindowStateTimeout: NodeJS.Timeout | undefined;
+
+    function storeWindowState() {
+        if (win.isDestroyed() || win.isMinimized()) return;
+
+        const { width, height, x, y } = win.getBounds();
+        store.set({ width, height, x, y, maximized: win.isMaximized() });
+    }
+
+    function scheduleStoreWindowState() {
+        if (storeWindowStateTimeout) clearTimeout(storeWindowStateTimeout);
+        storeWindowStateTimeout = setTimeout(storeWindowState, 250);
+    }
+
+    win.on('resize', scheduleStoreWindowState);
     win.on('resized', storeWindowState);
+    win.on('move', scheduleStoreWindowState);
+    win.on('moved', storeWindowState);
     win.on('maximize', storeWindowState);
     win.on('unmaximize', storeWindowState);
-    win.on('moved', storeWindowState);
+
+    win.on('show', () => notifyVisibilityChange(win));
+    win.on('hide', () => notifyVisibilityChange(win));
+    win.on('minimize', () => notifyVisibilityChange(win));
+    win.on('restore', () => notifyVisibilityChange(win));
+    win.webContents.on('did-finish-load', () => notifyVisibilityChange(win));
+};
+
+const onWindowAllClosed = () => {
+    // having this listener active will prevent the app from quitting.
 };
 
 if (hasSingleInstanceLock) {
@@ -161,18 +244,37 @@ if (hasSingleInstanceLock) {
         addTray(app, createWindow);
     });
 
-    app.on('window-all-closed', () => {
-        // having this listener active will prevent the app from quitting.
+    if (store.get('tray') === true) {
+        app.on('window-all-closed', onWindowAllClosed);
+    }
+
+    app.on('activate', function() {
+        if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
 
-    app.on('activate', function () {
-        if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    app.on('before-quit', () => {
+        isQuitting = true;
     });
 }
 
+store.onDidChange('tray', () => {
+    app.off('window-all-closed', onWindowAllClosed);
+
+    if (store.get('tray') === true) {
+        app.on('window-all-closed', onWindowAllClosed);
+    }
+});
+
 ipcMain.on('reload', () => {
+    store.delete('lastUrl');
     BrowserWindow.getAllWindows().forEach(x => x.destroy());
     createWindow();
-})
+});
+
+ipcMain.on('tray:set', (_event, value: boolean) => {
+    store.set('tray', value);
+});
+
+ipcMain.handle('tray:get', (): boolean => store.get('tray') === true);
 
 initDiscord();

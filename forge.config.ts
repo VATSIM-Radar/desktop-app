@@ -1,7 +1,13 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
+import { readFileSync } from 'node:fs';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
+import { PublisherGithub } from '@electron-forge/publisher-github';
 import VitePlugin from '@electron-forge/plugin-vite';
-import { version } from './package.json' with { type: 'json' };
+import { MakerZIP } from '@electron-forge/maker-zip';
+import { join } from 'path';
+
+const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
+const squirrelName = 'vatsim_radar_desktop';
 
 const config: ForgeConfig = {
     packagerConfig: {
@@ -10,7 +16,8 @@ const config: ForgeConfig = {
         executableName: 'vatsim-radar',
         overwrite: true,
         prune: false,
-        icon: './src/assets/icon.png',
+        icon: './src/assets/favicon.ico',
+        extraResource: ['./src/assets'],
     },
     outDir: 'out',
     buildIdentifier: 'test',
@@ -31,26 +38,31 @@ const config: ForgeConfig = {
                     target: 'preload',
                 },
             ],
-            renderer: [
-                {
-                    name: 'main_window',
-                    config: 'vite.renderer.config.ts',
-                },
-            ],
+            renderer: [],
         }),
     ],
     makers: [
         new MakerSquirrel({
+            name: squirrelName,
             title: 'VATSIM Radar',
-            name: 'VATSIM Radar',
             description: 'VATSIM Radar',
             authors: 'Danila Rodichkin, VATSIM Radar Contributors',
             owners: 'Danila Rodichkin',
-            iconUrl: 'https://next.vatsim-radar.com/web-app-manifest-192x192.png',
+            iconUrl: 'https://next.vatsim-radar.com/favicon.ico',
+            setupIcon: join('src', 'assets', 'favicon.ico'),
             version,
         }),
-        // new MakerZIP({}, ['darwin']),
+        new MakerZIP({}),
         // new MakerDeb({}, ['linux']),
+    ],
+    publishers: [
+        new PublisherGithub({
+            repository: {
+                owner: 'VATSIM-Radar',
+                name: 'desktop-app',
+            },
+            prerelease: true,
+        }),
     ],
 };
 

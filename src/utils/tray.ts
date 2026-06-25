@@ -1,11 +1,18 @@
 import type { App } from 'electron';
 import { BrowserWindow, Menu, Tray } from 'electron';
 import { nativeImage } from 'electron/common';
+import * as path from 'node:path';
 
 let tray: Tray | undefined;
 
+const getAssetPath = (app: App, ...parts: string[]) => {
+    return app.isPackaged
+        ? path.join(process.resourcesPath, 'assets', ...parts)
+        : path.join(app.getAppPath(), 'src', 'assets', ...parts);
+};
+
 export function addTray(app: App, createWindow: () => any) {
-    const icon = nativeImage.createFromPath('./src/assets/tray-icon.png');
+    const icon = nativeImage.createFromPath(getAssetPath(app, 'tray-icon.png'));
     tray = new Tray(icon);
 
     function openRadar() {
@@ -14,7 +21,10 @@ export function addTray(app: App, createWindow: () => any) {
             createWindow();
         }
         else {
-            wins[0].focus();
+            const win = wins[0];
+            if (win.isMinimized()) win.restore();
+            win.show();
+            win.focus();
         }
     }
 

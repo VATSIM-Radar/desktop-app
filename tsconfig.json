@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "node16",
+    "module": "node18",
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,

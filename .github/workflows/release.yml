@@ -32,8 +32,8 @@ jobs:
     name: Build ${{ matrix.platform }} ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: true
-      max-parallel: 5
+      fail-fast: false
+      max-parallel: 1
       matrix:
         include:
           - os: windows-latest

@@ -1,6 +1,6 @@
 import * as Squirell from 'electron-squirrel-startup';
 import { app, shell, BrowserWindow, ipcMain, autoUpdater } from 'electron';
-import { updateElectronApp, UpdateSourceType } from 'update-electron-app';
+import { makeUserNotifier, updateElectronApp, UpdateSourceType } from 'update-electron-app';
 import { addTray } from './utils/tray';
 import { nativeImage } from 'electron/common';
 import { store } from './utils/store';
@@ -66,6 +66,12 @@ const initAutoUpdates = () => {
             type: UpdateSourceType.StaticStorage,
             baseUrl: updateFeedBaseUrl,
         },
+        onNotifyUser: makeUserNotifier({
+            title: `${ appDisplayName } Update`,
+            detail: `A new version of ${ appDisplayName } has been downloaded. Restart the app to apply it.`,
+            restartButtonText: 'Restart',
+            laterButtonText: 'Later',
+        }),
         logger: {
             log: (...messages: unknown[]) => logAutoUpdate(app, 'info', ...messages),
             info: (...messages: unknown[]) => logAutoUpdate(app, 'info', ...messages),

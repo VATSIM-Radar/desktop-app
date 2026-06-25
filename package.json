@@ -1,6 +1,6 @@
 {
   "name": "vatsim-radar-desktop",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "license": "CC BY-NC 4.0",
   "main": ".vite/build/app.js",
   "packageManager": "yarn@4.17.0",

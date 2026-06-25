@@ -125,6 +125,7 @@ jobs:
           echo "platform=${{ matrix.platform }}"
           echo "arch=${{ matrix.arch }}"
           yarn electron-forge make --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
+          find out -maxdepth 10 -print || true
 
       - name: Collect release files
         shell: bash

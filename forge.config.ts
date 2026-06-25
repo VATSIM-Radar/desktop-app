@@ -30,11 +30,10 @@ const getArtifactName = (artifactPath: string, platform: string, arch: string) =
 const config: ForgeConfig = {
     packagerConfig: {
         asar: true,
-        quiet: false,
         name: 'VATSIM Radar',
         executableName: 'vatsim-radar',
         overwrite: true,
-        prune: true,
+        prune: false,
         icon: packagerIcon,
         extraResource: ['./src/assets'],
     },
@@ -70,7 +69,7 @@ const config: ForgeConfig = {
             setupIcon: join('src', 'assets', 'favicon.ico'),
             setupExe: 'vatsim-radar-setup.exe',
             version,
-        }),
+        }, ['win32']),
         new MakerDMG({
             name: `VATSIM Radar-${ version }`,
             icon: macInstallerIcon,

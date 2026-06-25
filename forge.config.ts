@@ -76,7 +76,6 @@ const config: ForgeConfig = {
             iconUrl: `${ appDomain }/favicon.ico`,
             setupIcon: join('src', 'assets', 'favicon.ico'),
             setupExe: 'vatsim-radar-win32-x64.exe',
-            remoteReleases: getUpdateBaseUrl('win32', targetArch),
             version,
         }, ['win32']),
         new MakerDMG({

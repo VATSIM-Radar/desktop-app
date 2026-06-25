@@ -131,12 +131,12 @@ jobs:
             -path './node_modules' -prune -o \
             -path './.git' -prune -o \
             -type f \( \
-            -name '*.exe' -o \
-            -name '*.dmg' -o \
-            -name '*.deb' -o \
-            -name '*.zip' -o \
-            -name '*.nupkg' -o \
-            -name 'RELEASES' \
+              -name 'vatsim-radar-setup.exe' -o \
+              -name 'vatsim-radar-*.dmg' -o \
+              -name 'vatsim-radar-*.deb' -o \
+              -name 'vatsim-radar-*.zip' -o \
+              -name '*.nupkg' -o \
+              -name 'RELEASES' \
           \) -exec cp {} release-assets/ \;
           find release-assets -maxdepth 1 -type f -print | sort
           test -n "$(find release-assets -maxdepth 1 -type f)"

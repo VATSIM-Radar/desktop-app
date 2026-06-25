@@ -8001,7 +8001,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"update-electron-app@npm:^3.2.0":
+"update-electron-app@npm:3.2.0":
   version: 3.2.0
   resolution: "update-electron-app@npm:3.2.0"
   dependencies:
@@ -8081,7 +8081,7 @@ __metadata:
     srvx: "npm:0.11.17"
     typescript: "npm:6.0.3"
     typescript-eslint: "npm:8.62.0"
-    update-electron-app: "npm:^3.2.0"
+    update-electron-app: "npm:3.2.0"
     vite: "npm:8.1.0"
   languageName: unknown
   linkType: soft

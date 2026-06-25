@@ -25,8 +25,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish:
-    name: Publish ${{ matrix.platform }} ${{ matrix.arch }}
+  build:
+    name: Build ${{ matrix.platform }} ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -119,6 +119,66 @@ jobs:
       - name: Make
         run: yarn make --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
 
+      - name: Collect release files
+        shell: bash
+        run: |
+          mkdir -p release-assets
+          find out/make -type f \( \
+            -name '*.exe' -o \
+            -name '*.dmg' -o \
+            -name '*.deb' -o \
+            -name '*.zip' -o \
+            -name '*.nupkg' -o \
+            -name 'RELEASES' \
+          \) -exec cp {} release-assets/ \;
+          find release-assets -maxdepth 1 -type f -print | sort
+          test -n "$(find release-assets -maxdepth 1 -type f)"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vatsim-radar-${{ matrix.platform }}-${{ matrix.arch }}
+          path: release-assets/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Verify release files
+        shell: bash
+        run: |
+          find release-assets -maxdepth 1 -type f -print | sort
+          test -n "$(find release-assets -maxdepth 1 -type f)"
+
+      - name: Select release channel
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            channel="${{ inputs.channel }}"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            channel="prod"
+          else
+            channel="next"
+          fi
+
+          echo "RELEASE_CHANNEL=$channel" >> "$GITHUB_ENV"
+
       - name: Prepare release metadata
         shell: bash
         run: |
@@ -146,14 +206,9 @@ jobs:
           tag_name: ${{ env.RELEASE_TAG }}
           name: ${{ env.RELEASE_NAME }}
           prerelease: ${{ env.RELEASE_PRERELEASE }}
-          fail_on_unmatched_files: false
+          fail_on_unmatched_files: true
           files: |
-            out/make/**/*.exe
-            out/make/**/*.dmg
-            out/make/**/*.deb
-            out/make/**/*.zip
-            out/make/**/RELEASES
-            out/make/**/*.nupkg
+            release-assets/*
 
       - name: Add release links to summary
         shell: bash
@@ -161,23 +216,22 @@ jobs:
           version="$(node -p "require('./package.json').version")"
           release_url="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}"
           {
-            echo "### Release assets: ${{ matrix.platform }} ${{ matrix.arch }}"
+            echo "### Release assets"
             echo
-
-            case "${{ matrix.platform }}" in
-              win32)
-                echo "- [vatsim-radar-setup.exe](${release_url}/vatsim-radar-setup.exe)"
-                echo "- [vatsim-radar-win32-${{ matrix.arch }}.zip](${release_url}/vatsim-radar-win32-${{ matrix.arch }}.zip)"
-                echo "- [update feed](https://update.electronjs.org/${{ github.repository }}/win32-${{ matrix.arch }}/${version})"
-                ;;
-              darwin)
-                echo "- [vatsim-radar-darwin-${{ matrix.arch }}.dmg](${release_url}/vatsim-radar-darwin-${{ matrix.arch }}.dmg)"
-                echo "- [vatsim-radar-darwin-${{ matrix.arch }}.zip](${release_url}/vatsim-radar-darwin-${{ matrix.arch }}.zip)"
-                echo "- [update feed](https://update.electronjs.org/${{ github.repository }}/darwin-${{ matrix.arch }}/${version})"
-                ;;
-              linux)
-                echo "- [vatsim-radar-linux-${{ matrix.arch }}.deb](${release_url}/vatsim-radar-linux-${{ matrix.arch }}.deb)"
-                echo "- [vatsim-radar-linux-${{ matrix.arch }}.zip](${release_url}/vatsim-radar-linux-${{ matrix.arch }}.zip)"
-                ;;
-            esac
+            echo "- [vatsim-radar-setup.exe](${release_url}/vatsim-radar-setup.exe)"
+            echo "- [vatsim-radar-win32-x64.zip](${release_url}/vatsim-radar-win32-x64.zip)"
+            echo "- [vatsim-radar-darwin-x64.dmg](${release_url}/vatsim-radar-darwin-x64.dmg)"
+            echo "- [vatsim-radar-darwin-x64.zip](${release_url}/vatsim-radar-darwin-x64.zip)"
+            echo "- [vatsim-radar-darwin-arm64.dmg](${release_url}/vatsim-radar-darwin-arm64.dmg)"
+            echo "- [vatsim-radar-darwin-arm64.zip](${release_url}/vatsim-radar-darwin-arm64.zip)"
+            echo "- [vatsim-radar-linux-x64.deb](${release_url}/vatsim-radar-linux-x64.deb)"
+            echo "- [vatsim-radar-linux-x64.zip](${release_url}/vatsim-radar-linux-x64.zip)"
+            echo "- [vatsim-radar-linux-arm64.deb](${release_url}/vatsim-radar-linux-arm64.deb)"
+            echo "- [vatsim-radar-linux-arm64.zip](${release_url}/vatsim-radar-linux-arm64.zip)"
+            echo
+            echo "### Update feeds"
+            echo
+            echo "- [Windows x64](https://update.electronjs.org/${{ github.repository }}/win32-x64/${version})"
+            echo "- [macOS x64](https://update.electronjs.org/${{ github.repository }}/darwin-x64/${version})"
+            echo "- [macOS arm64](https://update.electronjs.org/${{ github.repository }}/darwin-arm64/${version})"
           } >> "$GITHUB_STEP_SUMMARY"

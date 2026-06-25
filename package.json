@@ -30,7 +30,7 @@
     "@stylistic/eslint-plugin": "5.10.0",
     "@types/electron-squirrel-startup": "1.0.2",
     "@typescript-eslint/parser": "8.62.0",
-    "electron": "42.4.0",
+    "electron": "42.5.0",
     "electron-squirrel-startup": "1.0.1",
     "electron-store": "11.0.2",
     "eslint": "10.5.0",
@@ -41,6 +41,6 @@
     "vite": "8.1.0"
   },
   "resolutions": {
-    "extract-zip": "npm:@electron-internal/extract-zip@1.0.3"
+    "extract-zip": "npm:@electron-internal/extract-zip@1.0.4"
   }
 }

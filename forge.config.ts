@@ -41,6 +41,14 @@ const config: ForgeConfig = {
     rebuildConfig: {
         force: true,
     },
+    hooks: {
+        preMake: async () => {
+            console.log('>>> preMake');
+        },
+        postMake: async (_config, results) => {
+            console.log('>>> postMake', results);
+        },
+    },
     plugins: [
         new VitePlugin({
             build: [

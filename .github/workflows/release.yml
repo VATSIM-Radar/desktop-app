@@ -116,9 +116,7 @@ jobs:
         shell: bash
         env:
           DEBUG: electron-forge:*
-        run: |
-          yarn electron-forge package --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
-          yarn electron-forge make --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
+        run: yarn electron-forge make --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
 
       - name: Collect release files
         shell: bash

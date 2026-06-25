@@ -105,12 +105,16 @@ jobs:
       - name: Make
         run: yarn electron-forge make --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
 
-      - name: Verify macOS signature
+      - name: Verify macOS signatures
         if: matrix.platform == 'darwin'
         run: |
           app_path="$(find out -maxdepth 2 -type d -name '*.app' | head -n 1)"
           test -n "$app_path"
           codesign --verify --deep --strict --verbose=2 "$app_path"
+
+          dmg_path="$(find out -type f -name '*.dmg' | head -n 1)"
+          test -n "$dmg_path"
+          codesign --verify --verbose=2 "$dmg_path"
 
       - name: Collect release files
         run: |

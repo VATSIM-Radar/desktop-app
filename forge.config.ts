@@ -1,6 +1,6 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, renameSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, renameSync, statSync } from 'node:fs';
 import { dirname, extname, join } from 'path';
 import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerDMG } from '@electron-forge/maker-dmg';
@@ -24,6 +24,21 @@ const getArtifactName = (artifactPath: string, platform: string, arch: string) =
     if (extension === '.zip') return `vatsim-radar-${ platform }-${ arch }.zip`;
 
     return undefined;
+};
+
+const findMacAppBundle = (outputPath: string) => {
+    if (outputPath.endsWith('.app')) return outputPath;
+    if (!statSync(outputPath).isDirectory()) return undefined;
+
+    return readdirSync(outputPath)
+        .map(entry => join(outputPath, entry))
+        .find(entry => entry.endsWith('.app') && statSync(entry).isDirectory());
+};
+
+const signMacArtifact = (artifactPath: string) => {
+    execFileSync('codesign', ['--force', '--deep', '--sign', '-', artifactPath], {
+        stdio: 'inherit',
+    });
 };
 
 const config: ForgeConfig = {
@@ -95,9 +110,10 @@ const config: ForgeConfig = {
             if (packageResult.platform !== 'darwin') return;
 
             for (const outputPath of packageResult.outputPaths) {
-                execFileSync('codesign', ['--force', '--deep', '--sign', '-', outputPath], {
-                    stdio: 'inherit',
-                });
+                const appBundle = findMacAppBundle(outputPath);
+                if (!appBundle) continue;
+
+                signMacArtifact(appBundle);
             }
         },
         postMake: async (_config, makeResults) => {
@@ -116,6 +132,12 @@ const config: ForgeConfig = {
                     renameSync(artifactPath, renamedPath);
                     return renamedPath;
                 });
+
+                if (makeResult.platform === 'darwin') {
+                    makeResult.artifacts
+                        .filter(artifactPath => extname(artifactPath) === '.dmg')
+                        .forEach(signMacArtifact);
+                }
             }
 
             return makeResults;

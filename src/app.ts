@@ -7,7 +7,6 @@ import { store } from './utils/store';
 import * as path from 'node:path';
 import { getNavigraphAuthUrl, getVatsimAuthUrl } from './utils/auth';
 import { logAutoUpdate } from './utils/auto-updater-log';
-import { initDiscord } from './utils/server';
 
 // @ts-expect-error Non-esm
 if (Squirell.default) {
@@ -334,5 +333,3 @@ ipcMain.on('tray:set', (_event, value: boolean) => {
 });
 
 ipcMain.handle('tray:get', (): boolean => store.get('tray') === true);
-
-initDiscord();

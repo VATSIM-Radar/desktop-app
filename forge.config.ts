@@ -41,7 +41,7 @@ const config: ForgeConfig = {
         name: appDisplayName,
         executableName: 'vatsim-radar',
         overwrite: true,
-        prune: false,
+        prune: true,
         icon: process.env.PACKAGER_ICON ?? './src/assets/favicon.ico',
         extraResource: ['./src/assets'],
     },

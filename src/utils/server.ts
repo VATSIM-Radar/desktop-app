@@ -116,5 +116,3 @@ serve({
         return handleError('Not found');
     },
 });
-
-initDiscord();

@@ -123,8 +123,14 @@ jobs:
         shell: bash
         run: |
           mkdir -p release-assets
-          find out -maxdepth 4 -type f -print | sort
-          find out -type f \( \
+          find . \
+            -path './node_modules' -prune -o \
+            -path './.git' -prune -o \
+            -type f -print | sort
+          find . \
+            -path './node_modules' -prune -o \
+            -path './.git' -prune -o \
+            -type f \( \
             -name '*.exe' -o \
             -name '*.dmg' -o \
             -name '*.deb' -o \

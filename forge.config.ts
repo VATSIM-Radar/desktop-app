@@ -126,7 +126,7 @@ const config: ForgeConfig = {
     },
     publishers: [
         new PublisherS3({
-            bucket: process.env.CLOUDFLARE_R2_BUCKET ?? 'vatsim-radar',
+            bucket: process.env.CLOUDFLARE_R2_BUCKET ?? 'tiles',
             folder: `app/${ releaseChannel }`,
             endpoint: cloudflareR2Endpoint,
             region: process.env.CLOUDFLARE_R2_REGION ?? 'auto',

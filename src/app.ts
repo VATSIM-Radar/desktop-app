@@ -24,6 +24,13 @@ const getAssetPath = (...parts: string[]) => {
         ? path.join(process.resourcesPath, 'assets', ...parts)
         : path.join(app.getAppPath(), 'src', 'assets', ...parts);
 };
+const getWebPreferences = () => ({
+    devTools: true,
+    nodeIntegration: false,
+    contextIsolation: true,
+    partition: 'persist:main',
+    preload: path.join(__dirname, 'preload.js'),
+});
 
 const icon = nativeImage.createFromPath(getAssetPath(process.platform === 'win32' ? 'favicon.ico' : 'icon.png'));
 let mainWindow: BrowserWindow | undefined;
@@ -174,13 +181,7 @@ const createWindow = async () => {
         autoHideMenuBar: true,
         fullscreenable: true,
         tabbingIdentifier: 'vatsim-radar',
-        webPreferences: {
-            devTools: true,
-            nodeIntegration: false,
-            contextIsolation: true,
-            partition: 'persist:main',
-            preload: path.join(__dirname, 'preload.js'),
-        },
+        webPreferences: getWebPreferences(),
         width: store.get('width') || 640,
         height: store.get('height') || 360,
         x: store.get('x'),
@@ -214,7 +215,18 @@ const createWindow = async () => {
             return { action: 'deny' };
         }
 
-        return { action: 'allow' };
+        return {
+            action: 'allow',
+            overrideBrowserWindowOptions: {
+                title: appDisplayName,
+                autoHideMenuBar: true,
+                fullscreenable: true,
+                tabbingIdentifier: 'vatsim-radar',
+                backgroundColor: '#1A1A1A',
+                icon,
+                webPreferences: getWebPreferences(),
+            },
+        };
     });
 
     win.webContents.on('will-navigate', (event => {

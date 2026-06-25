@@ -1,0 +1,146 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - v*
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Release channel
+        required: true
+        default: next
+        type: choice
+        options:
+          - next
+          - prod
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.channel || (startsWith(github.ref, 'refs/tags/v') && 'prod' || 'next') }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish ${{ matrix.platform }} ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win32
+            arch: x64
+          - os: macos-latest
+            platform: darwin
+            arch: x64
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+          - os: ubuntu-latest
+            platform: linux
+            arch: arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install Linux packaging tools
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg fakeroot
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Select release channel
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            channel="${{ inputs.channel }}"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            channel="prod"
+          else
+            channel="next"
+          fi
+
+          if [[ "$channel" == "next" ]]; then
+            echo "RELEASE_CHANNEL=next" >> "$GITHUB_ENV"
+            echo "VITE_DOMAIN=https://next.vatsim-radar.com" >> "$GITHUB_ENV"
+          else
+            echo "RELEASE_CHANNEL=prod" >> "$GITHUB_ENV"
+            echo "VITE_DOMAIN=https://vatsim-radar.com" >> "$GITHUB_ENV"
+          fi
+
+          case "${{ matrix.platform }}" in
+            darwin)
+              echo "PACKAGER_ICON=./src/assets/icon.icns" >> "$GITHUB_ENV"
+              echo "MAC_INSTALLER_ICON=src/assets/icon.icns" >> "$GITHUB_ENV"
+              ;;
+            linux)
+              echo "PACKAGER_ICON=./src/assets/icon.png" >> "$GITHUB_ENV"
+              ;;
+            *)
+              echo "PACKAGER_ICON=./src/assets/favicon.ico" >> "$GITHUB_ENV"
+              ;;
+          esac
+
+      - name: Generate macOS icon
+        if: matrix.platform == 'darwin'
+        shell: bash
+        run: sips -s format icns src/assets/icon.png --out src/assets/icon.icns
+
+      - name: Publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: yarn publish:ci --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
+
+      - name: Add release links to summary
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [[ "$RELEASE_CHANNEL" == "next" ]]; then
+            release_tag="next-v${version}"
+          else
+            release_tag="v${version}"
+          fi
+
+          release_url="https://github.com/${{ github.repository }}/releases/download/${release_tag}"
+          {
+            echo "### Release assets: ${{ matrix.platform }} ${{ matrix.arch }}"
+            echo
+
+            case "${{ matrix.platform }}" in
+              win32)
+                echo "- [vatsim-radar-setup.exe](${release_url}/vatsim-radar-setup.exe)"
+                echo "- [vatsim-radar-win32-${{ matrix.arch }}.zip](${release_url}/vatsim-radar-win32-${{ matrix.arch }}.zip)"
+                echo "- [update feed](https://update.electronjs.org/${{ github.repository }}/win32-${{ matrix.arch }}/${version})"
+                ;;
+              darwin)
+                echo "- [vatsim-radar-darwin-${{ matrix.arch }}.dmg](${release_url}/vatsim-radar-darwin-${{ matrix.arch }}.dmg)"
+                echo "- [vatsim-radar-darwin-${{ matrix.arch }}.zip](${release_url}/vatsim-radar-darwin-${{ matrix.arch }}.zip)"
+                echo "- [update feed](https://update.electronjs.org/${{ github.repository }}/darwin-${{ matrix.arch }}/${version})"
+                ;;
+              linux)
+                echo "- [vatsim-radar-linux-${{ matrix.arch }}.deb](${release_url}/vatsim-radar-linux-${{ matrix.arch }}.deb)"
+                echo "- [vatsim-radar-linux-${{ matrix.arch }}.zip](${release_url}/vatsim-radar-linux-${{ matrix.arch }}.zip)"
+                ;;
+            esac
+          } >> "$GITHUB_STEP_SUMMARY"

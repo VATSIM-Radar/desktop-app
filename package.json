@@ -9,7 +9,8 @@
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
-    "publish": "electron-forge publish"
+    "publish": "electron-forge publish",
+    "publish:ci": "electron-forge publish"
   },
   "dependencies": {
     "@xhayper/discord-rpc": "^1.3.4",

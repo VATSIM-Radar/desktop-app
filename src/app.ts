@@ -1,12 +1,11 @@
 import * as Squirell from 'electron-squirrel-startup';
-import { app, shell, BrowserWindow, ipcMain } from 'electron';
+import { app, shell, BrowserWindow, ipcMain, autoUpdater } from 'electron';
 import { addTray } from './utils/tray';
 import { nativeImage } from 'electron/common';
 import { store } from './utils/store';
 import * as path from 'node:path';
 import { getNavigraphAuthUrl, getVatsimAuthUrl } from './utils/auth';
 import { initDiscord } from './utils/server';
-import { version } from '../package.json' with { type: 'json' };
 
 // @ts-expect-error Non-esm
 if (Squirell.default) {
@@ -32,6 +31,21 @@ if (process.platform === 'win32') {
     app.setAppUserModelId(appUserModelId);
 }
 
+const initAutoUpdates = () => {
+    if (!app.isPackaged || !['darwin', 'win32'].includes(process.platform)) return;
+
+    const updateFeedUrl = `https://update.electronjs.org/VATSIM-Radar/desktop-app/${ process.platform }-${ process.arch }/${ app.getVersion() }`;
+
+    autoUpdater.setFeedURL({
+        url: updateFeedUrl,
+    });
+    autoUpdater.on('error', () => {
+        // Update checks should never prevent the web wrapper from opening.
+    });
+    autoUpdater.checkForUpdates();
+    setInterval(() => autoUpdater.checkForUpdates(), 10 * 60 * 1000);
+};
+
 const notifyVisibilityChange = (win: BrowserWindow) => {
     if (win.isDestroyed()) return;
 
@@ -44,7 +58,7 @@ const notifyVisibilityChange = (win: BrowserWindow) => {
 
 const loadAppUrl = (win: BrowserWindow, url: string) => {
     return win.loadURL(url, {
-        extraHeaders: `radarWebview: ${ version }
+        extraHeaders: `radarWebview: ${ app.getVersion() }
 `,
     });
 };
@@ -240,6 +254,7 @@ const onWindowAllClosed = () => {
 if (hasSingleInstanceLock) {
     app.whenReady().then(() => {
         createWindow();
+        initAutoUpdates();
 
         addTray(app, createWindow);
     });

@@ -15,9 +15,17 @@ on:
 permissions:
   contents: write
 
+env:
+  RELEASE_CHANNEL: ${{ inputs.channel }}
+  VITE_DOMAIN: ${{ inputs.channel == 'next' && 'https://next.vatsim-radar.com' || 'https://vatsim-radar.com' }}
+
 concurrency:
-  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.channel || (startsWith(github.ref, 'refs/tags/v') && 'prod' || 'next') }}
+  group: release-${{ inputs.channel }}
   cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   build:
@@ -65,25 +73,8 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Select release channel
-        shell: bash
+      - name: Select platform icons
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            channel="${{ inputs.channel }}"
-          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            channel="prod"
-          else
-            channel="next"
-          fi
-
-          if [[ "$channel" == "next" ]]; then
-            echo "RELEASE_CHANNEL=next" >> "$GITHUB_ENV"
-            echo "VITE_DOMAIN=https://next.vatsim-radar.com" >> "$GITHUB_ENV"
-          else
-            echo "RELEASE_CHANNEL=prod" >> "$GITHUB_ENV"
-            echo "VITE_DOMAIN=https://vatsim-radar.com" >> "$GITHUB_ENV"
-          fi
-
           case "${{ matrix.platform }}" in
             darwin)
               echo "PACKAGER_ICON=./src/assets/icon.icns" >> "$GITHUB_ENV"
@@ -99,7 +90,6 @@ jobs:
 
       - name: Generate macOS icon
         if: matrix.platform == 'darwin'
-        shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
           mkdir -p src/assets/icon.iconset
@@ -113,23 +103,13 @@ jobs:
           iconutil -c icns src/assets/icon.iconset -o src/assets/icon.icns
 
       - name: Make
-        shell: bash
-        env:
-          DEBUG: electron-forge:*
         run: yarn electron-forge make --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
 
       - name: Collect release files
-        shell: bash
         run: |
           cd "$GITHUB_WORKSPACE"
           mkdir -p release-assets
-          find . \
-            -path './node_modules' -prune -o \
-            -path './.git' -prune -o \
-            -type f -print | sort
-          find . \
-            -path './node_modules' -prune -o \
-            -path './.git' -prune -o \
+          find out \
             -type f \( \
               -name 'vatsim-radar-setup.exe' -o \
               -name 'vatsim-radar-*.dmg' -o \
@@ -168,26 +148,11 @@ jobs:
           merge-multiple: true
 
       - name: Verify release files
-        shell: bash
         run: |
           find release-assets -maxdepth 1 -type f -print | sort
           test -n "$(find release-assets -maxdepth 1 -type f)"
 
-      - name: Select release channel
-        shell: bash
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            channel="${{ inputs.channel }}"
-          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            channel="prod"
-          else
-            channel="next"
-          fi
-
-          echo "RELEASE_CHANNEL=$channel" >> "$GITHUB_ENV"
-
       - name: Prepare release metadata
-        shell: bash
         run: |
           version="$(node -p "require('./package.json').version")"
 
@@ -218,23 +183,15 @@ jobs:
             release-assets/*
 
       - name: Add release links to summary
-        shell: bash
         run: |
           version="$(node -p "require('./package.json').version")"
           release_url="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}"
           {
             echo "### Release assets"
             echo
-            echo "- [vatsim-radar-setup.exe](${release_url}/vatsim-radar-setup.exe)"
-            echo "- [vatsim-radar-win32-x64.zip](${release_url}/vatsim-radar-win32-x64.zip)"
-            echo "- [vatsim-radar-darwin-x64.dmg](${release_url}/vatsim-radar-darwin-x64.dmg)"
-            echo "- [vatsim-radar-darwin-x64.zip](${release_url}/vatsim-radar-darwin-x64.zip)"
-            echo "- [vatsim-radar-darwin-arm64.dmg](${release_url}/vatsim-radar-darwin-arm64.dmg)"
-            echo "- [vatsim-radar-darwin-arm64.zip](${release_url}/vatsim-radar-darwin-arm64.zip)"
-            echo "- [vatsim-radar-linux-x64.deb](${release_url}/vatsim-radar-linux-x64.deb)"
-            echo "- [vatsim-radar-linux-x64.zip](${release_url}/vatsim-radar-linux-x64.zip)"
-            echo "- [vatsim-radar-linux-arm64.deb](${release_url}/vatsim-radar-linux-arm64.deb)"
-            echo "- [vatsim-radar-linux-arm64.zip](${release_url}/vatsim-radar-linux-arm64.zip)"
+            find release-assets -maxdepth 1 -type f -printf '%f\n' | sort | while read -r asset; do
+              echo "- [${asset}](${release_url}/${asset})"
+            done
             echo
             echo "### Update feeds"
             echo

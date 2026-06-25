@@ -9,12 +9,9 @@ import { PublisherGithub } from '@electron-forge/publisher-github';
 import VitePlugin from '@electron-forge/plugin-vite';
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
-const squirrelName = 'vatsim_radar_desktop';
 const releaseChannel = process.env.RELEASE_CHANNEL === 'next' ? 'next' : 'prod';
 const isNextRelease = releaseChannel === 'next';
 const appDomain = process.env.VITE_DOMAIN ?? (isNextRelease ? 'https://next.vatsim-radar.com' : 'https://vatsim-radar.com');
-const packagerIcon = process.env.PACKAGER_ICON ?? './src/assets/favicon.ico';
-const macInstallerIcon = process.env.MAC_INSTALLER_ICON ?? join('src', 'assets', 'icon.png');
 
 const getArtifactName = (artifactPath: string, platform: string, arch: string) => {
     const extension = extname(artifactPath);
@@ -27,14 +24,6 @@ const getArtifactName = (artifactPath: string, platform: string, arch: string) =
     return undefined;
 };
 
-process.on('exit', code => {
-    console.log('>>> PROCESS EXIT', code);
-});
-
-process.on('beforeExit', code => {
-    console.log('>>> PROCESS BEFORE EXIT', code);
-});
-
 const config: ForgeConfig = {
     packagerConfig: {
         asar: true,
@@ -42,7 +31,7 @@ const config: ForgeConfig = {
         executableName: 'vatsim-radar',
         overwrite: true,
         prune: false,
-        icon: packagerIcon,
+        icon: process.env.PACKAGER_ICON ?? './src/assets/favicon.ico',
         extraResource: ['./src/assets'],
     },
     outDir: 'out',
@@ -68,7 +57,7 @@ const config: ForgeConfig = {
     ],
     makers: [
         new MakerSquirrel({
-            name: squirrelName,
+            name: 'vatsim_radar_desktop',
             title: 'VATSIM Radar',
             description: 'VATSIM Radar',
             authors: 'Danila Rodichkin, VATSIM Radar Contributors',
@@ -80,7 +69,7 @@ const config: ForgeConfig = {
         }, ['win32']),
         new MakerDMG({
             name: `VATSIM Radar-${ version }`,
-            icon: macInstallerIcon,
+            icon: process.env.MAC_INSTALLER_ICON ?? join('src', 'assets', 'icon.png'),
             format: 'ULFO',
         }, ['darwin']),
         new MakerZIP({}, ['win32', 'darwin', 'linux']),
@@ -93,22 +82,14 @@ const config: ForgeConfig = {
                 productDescription: 'Desktop wrapper for VATSIM Radar.',
                 maintainer: 'Danila Rodichkin',
                 homepage: appDomain,
+                bin: 'vatsim-radar',
                 icon: join('src', 'assets', 'icon.png'),
                 categories: ['Network'],
             },
         }),
     ],
     hooks: {
-        postPackage: async (_config, result) => {
-            console.log('>>> postPackage', result);
-            return result;
-        },
-        preMake: async () => {
-            console.log('>>> preMake');
-        },
         postMake: async (_config, makeResults) => {
-            console.log('>>> postMake', makeResults);
-
             for (const makeResult of makeResults) {
                 makeResult.artifacts = makeResult.artifacts.map(artifactPath => {
                     const artifactName = getArtifactName(artifactPath, makeResult.platform, makeResult.arch);

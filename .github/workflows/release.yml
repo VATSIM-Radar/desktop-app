@@ -106,6 +106,7 @@ jobs:
         if: matrix.platform == 'darwin'
         shell: bash
         run: |
+          cd "$GITHUB_WORKSPACE"
           mkdir -p src/assets/icon.iconset
 
           for size in 16 32 128 256 512; do
@@ -117,13 +118,20 @@ jobs:
           iconutil -c icns src/assets/icon.iconset -o src/assets/icon.icns
 
       - name: Make
+        shell: bash
         env:
           DEBUG: electron-forge:*
-        run: yarn electron-forge make --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          echo "PWD=$(pwd)"
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          yarn electron-forge make --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
+          find "$GITHUB_WORKSPACE" -maxdepth 3 -type d -print | sort
 
       - name: Collect release files
         shell: bash
         run: |
+          cd "$GITHUB_WORKSPACE"
           mkdir -p release-assets
           find . \
             -path './node_modules' -prune -o \

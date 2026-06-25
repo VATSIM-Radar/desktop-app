@@ -30,10 +30,11 @@ const getArtifactName = (artifactPath: string, platform: string, arch: string) =
 const config: ForgeConfig = {
     packagerConfig: {
         asar: true,
+        quiet: false,
         name: 'VATSIM Radar',
         executableName: 'vatsim-radar',
         overwrite: true,
-        prune: false,
+        prune: true,
         icon: packagerIcon,
         extraResource: ['./src/assets'],
     },

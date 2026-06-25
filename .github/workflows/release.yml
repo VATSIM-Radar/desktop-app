@@ -68,7 +68,7 @@ jobs:
           sudo apt-get install -y dpkg fakeroot
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install
 
       - name: Select release channel
         shell: bash

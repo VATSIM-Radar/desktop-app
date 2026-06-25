@@ -13,7 +13,6 @@ const releaseChannel = process.env.RELEASE_CHANNEL === 'next' ? 'next' : 'prod';
 const isNextRelease = releaseChannel === 'next';
 const appDomain = process.env.VITE_DOMAIN ?? (isNextRelease ? 'https://next.vatsim-radar.com' : 'https://vatsim-radar.com');
 const appDisplayName = isNextRelease ? 'VATSIM Radar Next' : 'VATSIM Radar';
-const shouldSignMac = process.platform === 'darwin';
 
 const getArtifactName = (artifactPath: string, platform: string, arch: string) => {
     const extension = extname(artifactPath);
@@ -35,11 +34,6 @@ const config: ForgeConfig = {
         prune: false,
         icon: process.env.PACKAGER_ICON ?? './src/assets/favicon.ico',
         extraResource: ['./src/assets'],
-        osxSign: shouldSignMac
-            ? {
-                identity: '-',
-            }
-            : undefined,
     },
     outDir: 'out',
     rebuildConfig: {

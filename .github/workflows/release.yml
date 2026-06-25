@@ -116,22 +116,51 @@ jobs:
 
           iconutil -c icns src/assets/icon.iconset -o src/assets/icon.icns
 
-      - name: Publish
+      - name: Make
+        run: yarn make --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
+
+      - name: Prepare release metadata
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+
+          if [[ "$RELEASE_CHANNEL" == "next" ]]; then
+            release_tag="next-v${version}"
+            prerelease="true"
+            release_name="VATSIM Radar ${version} Next"
+          else
+            release_tag="v${version}"
+            prerelease="false"
+            release_name="VATSIM Radar ${version}"
+          fi
+
+          echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
+          echo "RELEASE_NAME=$release_name" >> "$GITHUB_ENV"
+          echo "RELEASE_PRERELEASE=$prerelease" >> "$GITHUB_ENV"
+
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: yarn publish:ci --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_NAME }}
+          prerelease: ${{ env.RELEASE_PRERELEASE }}
+          make_latest: ${{ env.RELEASE_CHANNEL == 'prod' && 'true' || 'false' }}
+          fail_on_unmatched_files: true
+          files: |
+            out/make/**/*.exe
+            out/make/**/*.dmg
+            out/make/**/*.deb
+            out/make/**/*.zip
+            out/make/**/RELEASES
+            out/make/**/*.nupkg
 
       - name: Add release links to summary
         shell: bash
         run: |
           version="$(node -p "require('./package.json').version")"
-          if [[ "$RELEASE_CHANNEL" == "next" ]]; then
-            release_tag="next-v${version}"
-          else
-            release_tag="v${version}"
-          fi
-
-          release_url="https://github.com/${{ github.repository }}/releases/download/${release_tag}"
+          release_url="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}"
           {
             echo "### Release assets: ${{ matrix.platform }} ${{ matrix.arch }}"
             echo

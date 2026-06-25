@@ -56,63 +56,65 @@ interface DiscordPresenceBody {
     appAsVatsimRadar: boolean;
 }
 
-serve({
-    port: 8442,
-    async fetch(request) {
-        const path = request.url.split(':8442')[1];
-        const method = request.method;
+export function startServer() {
+    serve({
+        port: 8442,
+        async fetch(request) {
+            const path = request.url.split(':8442')[1];
+            const method = request.method;
 
-        if (method === 'OPTIONS') {
-            return new Response(null, {
-                status: 204,
-                headers: corsHeaders,
-            });
-        }
+            if (method === 'OPTIONS') {
+                return new Response(null, {
+                    status: 204,
+                    headers: corsHeaders,
+                });
+            }
 
-        const route = findRoute<{ type: string }>(router, method, path);
+            const route = findRoute<{ type: string }>(router, method, path);
 
-        if (!route) {
-            return new Response('not found', {
-                status: 404,
-                headers: corsHeaders,
-            });
-        }
+            if (!route) {
+                return new Response('not found', {
+                    status: 404,
+                    headers: corsHeaders,
+                });
+            }
 
-        if (route.data.type === 'set-presence') {
-            await initDiscord();
+            if (route.data.type === 'set-presence') {
+                await initDiscord();
 
-            if (status) {
-                const body = await request.json() as DiscordPresenceBody;
+                if (status) {
+                    const body = await request.json() as DiscordPresenceBody;
 
-                try {
-                    await client?.user?.setActivity({
-                        name: body.appAsVatsimRadar ? 'VATSIM Radar' : 'VATSIM',
-                        details: body.details,
-                        detailsUrl: body.pilotCallsign
-                            ? `https://vatsim-radar.com/?pilot=${ body.pilotCallsign }`
-                            : body.atcCallsign
-                                ? `https://vatsim-radar.com/?atc=${ body.atcCallsign }`
-                                : undefined,
-                        state: body.state,
-                        startTimestamp: body.startTimestamp ? new Date(body.startTimestamp) : undefined,
-                    });
+                    try {
+                        await client?.user?.setActivity({
+                            name: body.appAsVatsimRadar ? 'VATSIM Radar' : 'VATSIM',
+                            details: body.details,
+                            detailsUrl: body.pilotCallsign
+                                ? `https://vatsim-radar.com/?pilot=${ body.pilotCallsign }`
+                                : body.atcCallsign
+                                    ? `https://vatsim-radar.com/?atc=${ body.atcCallsign }`
+                                    : undefined,
+                            state: body.state,
+                            startTimestamp: body.startTimestamp ? new Date(body.startTimestamp) : undefined,
+                        });
 
-                    return new Response('ok', {
-                        headers: corsHeaders,
-                    });
-                }
-                catch {
-                    return new Response('Something went wrong', {
-                        status: 500,
-                        headers: corsHeaders,
-                    });
+                        return new Response('ok', {
+                            headers: corsHeaders,
+                        });
+                    }
+                    catch {
+                        return new Response('Something went wrong', {
+                            status: 500,
+                            headers: corsHeaders,
+                        });
+                    }
                 }
             }
-        }
-        else if (route.data.type === 'delete-presence') {
-            await client?.user?.clearActivity();
-        }
+            else if (route.data.type === 'delete-presence') {
+                await client?.user?.clearActivity();
+            }
 
-        return handleError('Not found');
-    },
-});
+            return handleError('Not found');
+        },
+    });
+}

@@ -163,6 +163,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@electron-forge/maker-msix@npm:^7.11.2":
+  version: 7.11.2
+  resolution: "@electron-forge/maker-msix@npm:7.11.2"
+  dependencies:
+    "@electron-forge/core-utils": "npm:7.11.2"
+    "@electron-forge/maker-base": "npm:7.11.2"
+    "@electron-forge/shared-types": "npm:7.11.2"
+    cross-spawn: "npm:^7.0.3"
+    electron-windows-msix: "npm:^2.0.4"
+    fs-extra: "npm:^10.0.0"
+    parse-author: "npm:^2.0.0"
+  checksum: 10c0/8d5ba35619484052906f5194d56943694fd8adfc3c3f2e502d782837bb506b87ef3c2b720e2398ae1f43ab0ea9569a06b9a6df749736ca7f574217dd549678db
+  languageName: node
+  linkType: hard
+
 "@electron-forge/maker-squirrel@npm:7.11.2":
   version: 7.11.2
   resolution: "@electron-forge/maker-squirrel@npm:7.11.2"
@@ -501,7 +516,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@electron/windows-sign@npm:^1.0.0, @electron/windows-sign@npm:^1.1.2":
+"@electron/windows-sign@npm:^1.0.0, @electron/windows-sign@npm:^1.1.2, @electron/windows-sign@npm:^1.2.2":
   version: 1.2.2
   resolution: "@electron/windows-sign@npm:1.2.2"
   dependencies:
@@ -2415,6 +2430,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chalk@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "chalk@npm:3.0.0"
+  dependencies:
+    ansi-styles: "npm:^4.1.0"
+    supports-color: "npm:^7.1.0"
+  checksum: 10c0/ee650b0a065b3d7a6fda258e75d3a86fc8e4effa55871da730a9e42ccb035bf5fd203525e5a1ef45ec2582ecc4f65b47eb11357c526b84dd29a14fb162c414d2
+  languageName: node
+  linkType: hard
+
 "chalk@npm:^4.0.0, chalk@npm:^4.1.0":
   version: 4.1.2
   resolution: "chalk@npm:4.1.2"
@@ -2684,7 +2709,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cross-spawn@npm:^7.0.1, cross-spawn@npm:^7.0.6":
+"cross-spawn@npm:^7.0.1, cross-spawn@npm:^7.0.3, cross-spawn@npm:^7.0.6":
   version: 7.0.6
   resolution: "cross-spawn@npm:7.0.6"
   dependencies:
@@ -2744,7 +2769,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:4, debug@npm:^4.0.1, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.3, debug@npm:^4.3.4, debug@npm:^4.4.0, debug@npm:^4.4.3":
+"debug@npm:4, debug@npm:^4.0.1, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.3, debug@npm:^4.3.4, debug@npm:^4.4.0, debug@npm:^4.4.1, debug@npm:^4.4.3":
   version: 4.4.3
   resolution: "debug@npm:4.4.3"
   dependencies:
@@ -3006,6 +3031,20 @@ __metadata:
   version: 1.5.372
   resolution: "electron-to-chromium@npm:1.5.372"
   checksum: 10c0/2071da5329cde5f2eb6c01b181ee4b61c09f8da38609b6203155357427dd3b5489e9cdb0b7686b0be4b0633d5df5c86a96d588fc599be4fb7a65169270a8568b
+  languageName: node
+  linkType: hard
+
+"electron-windows-msix@npm:^2.0.4":
+  version: 2.0.4
+  resolution: "electron-windows-msix@npm:2.0.4"
+  dependencies:
+    "@electron/windows-sign": "npm:^1.2.2"
+    "@malept/cross-spawn-promise": "npm:^2.0.0"
+    chalk: "npm:^3.0.0"
+    debug: "npm:^4.4.1"
+    fs-extra: "npm:^11.2.0"
+    xml-escape: "npm:^1.1.0"
+  checksum: 10c0/2fe28f34920534c45ad9e8424ce3c687862f332190df241101c72f87ea438eff7c71f313bc96f5961d2adee62ef06874d61ab8b71d044de4aaed216665f6965c
   languageName: node
   linkType: hard
 
@@ -3811,7 +3850,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fs-extra@npm:^11.1.0, fs-extra@npm:^11.1.1":
+"fs-extra@npm:^11.1.0, fs-extra@npm:^11.1.1, fs-extra@npm:^11.2.0":
   version: 11.3.5
   resolution: "fs-extra@npm:11.3.5"
   dependencies:
@@ -7729,6 +7768,7 @@ __metadata:
     "@electron-forge/cli": "npm:7.11.2"
     "@electron-forge/maker-deb": "npm:7.11.2"
     "@electron-forge/maker-dmg": "npm:7.11.2"
+    "@electron-forge/maker-msix": "npm:^7.11.2"
     "@electron-forge/maker-squirrel": "npm:7.11.2"
     "@electron-forge/maker-zip": "npm:7.11.2"
     "@electron-forge/plugin-vite": "npm:7.11.2"
@@ -8048,6 +8088,13 @@ __metadata:
     utf-8-validate:
       optional: true
   checksum: 10c0/ef4a243476283fc49bc7550966c4af4aa0eef56273837211e700de3b664e08604a760cdddcb5ba43c049140e74ccfec5b0ee0bb439e08c2adf9138902fdde5f9
+  languageName: node
+  linkType: hard
+
+"xml-escape@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "xml-escape@npm:1.1.0"
+  checksum: 10c0/973cef0e383c373d1ccbacbba33ac49e7f2afd60d2710ed1308e153d2aa3b3189477f79315eb10eed43b7221add040a5eab18107170b658559e4d29ce7653a76
   languageName: node
   linkType: hard
 

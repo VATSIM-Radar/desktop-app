@@ -1,4 +1,5 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, renameSync } from 'node:fs';
 import { dirname, extname, join } from 'path';
 import { MakerDeb } from '@electron-forge/maker-deb';
@@ -13,7 +14,6 @@ const releaseChannel = process.env.RELEASE_CHANNEL === 'next' ? 'next' : 'prod';
 const isNextRelease = releaseChannel === 'next';
 const appDomain = process.env.VITE_DOMAIN ?? (isNextRelease ? 'https://next.vatsim-radar.com' : 'https://vatsim-radar.com');
 const appDisplayName = isNextRelease ? 'VATSIM Radar Next' : 'VATSIM Radar';
-const shouldSignMac = process.platform === 'darwin';
 
 const getArtifactName = (artifactPath: string, platform: string, arch: string) => {
     const extension = extname(artifactPath);
@@ -35,11 +35,6 @@ const config: ForgeConfig = {
         prune: false,
         icon: process.env.PACKAGER_ICON ?? './src/assets/favicon.ico',
         extraResource: ['./src/assets'],
-        osxSign: shouldSignMac
-            ? {
-                identity: '-',
-            }
-            : undefined,
     },
     outDir: 'out',
     rebuildConfig: {
@@ -96,6 +91,15 @@ const config: ForgeConfig = {
         }),
     ],
     hooks: {
+        postPackage: async (_config, packageResult) => {
+            if (packageResult.platform !== 'darwin') return;
+
+            for (const outputPath of packageResult.outputPaths) {
+                execFileSync('codesign', ['--force', '--deep', '--sign', '-', outputPath], {
+                    stdio: 'inherit',
+                });
+            }
+        },
         postMake: async (_config, makeResults) => {
             for (const makeResult of makeResults) {
                 makeResult.artifacts = makeResult.artifacts.map(artifactPath => {

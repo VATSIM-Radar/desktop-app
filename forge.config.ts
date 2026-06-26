@@ -29,7 +29,6 @@ const getArtifactName = (artifactPath: string, platform: string, arch: string) =
     if (extension === '.exe') return `vatsim-radar-${ platform }-${ arch }.exe`;
     if (extension === '.dmg') return `vatsim-radar-${ platform }-${ arch }.dmg`;
     if (extension === '.deb') return `vatsim-radar-${ platform }-${ arch }.deb`;
-    if (platform === 'darwin' && extension === '.zip') return undefined;
     if (extension === '.zip') return `vatsim-radar-${ platform }-${ arch }.zip`;
 
     return undefined;

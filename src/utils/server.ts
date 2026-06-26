@@ -1,6 +1,7 @@
 import { addRoute, createRouter, findRoute } from 'rou3';
 import { serve } from 'srvx';
 import { Client } from '@xhayper/discord-rpc';
+import type { SetActivity } from '@xhayper/discord-rpc/dist/structures/ClientUser';
 
 const router = createRouter<{ type: string }>();
 
@@ -56,6 +57,8 @@ interface DiscordPresenceBody {
     appAsVatsimRadar: boolean;
 }
 
+let previousActivity: Record<string, any> = {};
+
 export function startServer() {
     serve({
         port: 8442,
@@ -86,8 +89,8 @@ export function startServer() {
                     const body = await request.json() as DiscordPresenceBody;
 
                     try {
-                        await client?.user?.setActivity({
-                            name: body.appAsVatsimRadar ? 'VATSIM Radar' : 'VATSIM',
+                        const activity = {
+                            name: 'VATSIM Radar',
                             details: body.details,
                             detailsUrl: body.pilotCallsign
                                 ? `https://vatsim-radar.com/?pilot=${ body.pilotCallsign }`
@@ -96,13 +99,20 @@ export function startServer() {
                                     : undefined,
                             state: body.state,
                             startTimestamp: body.startTimestamp ? new Date(body.startTimestamp) : undefined,
-                        });
+                        } satisfies SetActivity;
+
+
+                        if (JSON.stringify(activity) !== JSON.stringify(previousActivity)) {
+                            await client?.user?.setActivity(activity);
+                            previousActivity = activity;
+                        }
 
                         return new Response('ok', {
                             headers: corsHeaders,
                         });
                     }
                     catch {
+                        previousActivity = {};
                         return new Response('Something went wrong', {
                             status: 500,
                             headers: corsHeaders,

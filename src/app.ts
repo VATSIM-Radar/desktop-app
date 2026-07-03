@@ -269,7 +269,11 @@ const createWindow = async () => {
         void loadAppUrl(win, domain);
     });
 
-    const initialUrl = pendingAuthUrl ?? store.get('lastUrl') ?? domain;
+    const lastUrl = store.get('lastUrl');
+    let initialUrl = pendingAuthUrl ?? store.get('lastUrl') ?? domain;
+
+    if (!pendingAuthUrl && lastUrl && !lastUrl.startsWith(domain)) initialUrl = domain;
+
     pendingAuthUrl = undefined;
 
     try {

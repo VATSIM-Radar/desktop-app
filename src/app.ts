@@ -15,7 +15,6 @@ if (Squirell.default) {
 }
 
 const domain = process.env.VITE_DOMAIN!;
-const apiUrl = `${ domain }/api`;
 const isNextRelease = domain.includes('next.');
 const updateBaseUrl = process.env.VITE_UPDATE_BASE_URL ?? `https://r2.vatsim-radar.com/app/${ isNextRelease ? 'next' : 'prod' }`;
 const appDisplayName = isNextRelease ? 'VATSIM Radar Next' : 'VATSIM Radar';
@@ -206,9 +205,9 @@ const createWindow = async () => {
     addAppRequestHeaders(win);
 
     win.webContents.session.webRequest.onCompleted(
-        { urls: [`${ domain }/*`] },
+        { urls: [`${ domain }/api*`] },
         details => {
-            if (details.resourceType !== 'mainFrame' || details.statusCode < 500 || details.url === domain || details.url === `${ domain }/`) return;
+            if (details.resourceType !== 'mainFrame' || details.statusCode < 500) return;
 
             void loadAppUrl(win, domain);
         },
@@ -234,11 +233,6 @@ const createWindow = async () => {
     win.webContents.setWindowOpenHandler(({ url }) => {
         if (!url.startsWith(domain)) {
             shell.openExternal(url);
-            return { action: 'deny' };
-        }
-
-        if (url.startsWith(apiUrl)) {
-            void loadAppUrl(win, domain);
             return { action: 'deny' };
         }
 
@@ -269,34 +263,18 @@ const createWindow = async () => {
             event.preventDefault();
             return;
         }
-
-        if (event.url.startsWith(apiUrl) && event.url !== currentAuthUrl) {
-            event.preventDefault();
-            void loadAppUrl(win, domain);
-            return;
-        }
     }));
 
     const storeLastUrl = (url: string) => {
-        if (url.startsWith(domain) && !url.startsWith(apiUrl)) store.set('lastUrl', url);
+        if (url.startsWith(domain)) store.set('lastUrl', url);
     };
 
     win.webContents.on('did-navigate', (_event, url) => {
-        if (url.startsWith(apiUrl)) {
-            void loadAppUrl(win, domain);
-            return;
-        }
-
         storeLastUrl(url);
     });
 
     win.webContents.on('did-navigate-in-page', (_event, url, isMainFrame) => {
         if (!isMainFrame) return;
-
-        if (url.startsWith(apiUrl)) {
-            void loadAppUrl(win, domain);
-            return;
-        }
 
         storeLastUrl(url);
     });
@@ -317,7 +295,7 @@ const createWindow = async () => {
     const lastUrl = store.get('lastUrl');
     let initialUrl = pendingAuthUrl ?? store.get('lastUrl') ?? domain;
 
-    if (!pendingAuthUrl && lastUrl && (!lastUrl.startsWith(domain) || lastUrl.startsWith(apiUrl))) initialUrl = domain;
+    if (!pendingAuthUrl && lastUrl && !lastUrl.startsWith(domain)) initialUrl = domain;
 
     pendingAuthUrl = undefined;
 

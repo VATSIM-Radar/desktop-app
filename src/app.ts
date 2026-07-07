@@ -15,6 +15,7 @@ if (Squirell.default) {
 }
 
 const domain = process.env.VITE_DOMAIN!;
+const apiUrl = `${ domain }/api`;
 const isNextRelease = domain.includes('next.');
 const updateBaseUrl = process.env.VITE_UPDATE_BASE_URL ?? `https://r2.vatsim-radar.com/app/${ isNextRelease ? 'next' : 'prod' }`;
 const appDisplayName = isNextRelease ? 'VATSIM Radar Next' : 'VATSIM Radar';
@@ -36,6 +37,8 @@ const icon = nativeImage.createFromPath(getAssetPath(process.platform === 'win32
 let mainWindow: BrowserWindow | undefined;
 let pendingAuthUrl: string | undefined;
 let currentAuthUrl: string | undefined;
+let isAuthRequestLocked = false;
+let authRequestTimeout: NodeJS.Timeout | undefined;
 let isQuitting = false;
 let isMainWindowVisible: boolean | undefined;
 
@@ -107,10 +110,8 @@ const loadAppUrl = (win: BrowserWindow, url: string) => {
 };
 
 const addAppRequestHeaders = (win: BrowserWindow) => {
-    const appOrigin = new URL(domain).origin;
-
     win.webContents.session.webRequest.onBeforeSendHeaders(
-        { urls: [`${ appOrigin }/*`] },
+        { urls: [`${ domain }/*`] },
         (details, callback) => {
             details.requestHeaders.radarWebview = app.getVersion();
             callback({ requestHeaders: details.requestHeaders });
@@ -125,11 +126,23 @@ const showWindow = (win: BrowserWindow) => {
     win.focus();
 };
 
+const lockAuthRequest = () => {
+    isAuthRequestLocked = true;
+
+    if (authRequestTimeout) clearTimeout(authRequestTimeout);
+
+    authRequestTimeout = setTimeout(() => {
+        isAuthRequestLocked = false;
+        authRequestTimeout = undefined;
+    }, 10000);
+};
+
 const handleDeeplinkAuth = (deepLink: string) => {
     const authUrl = getVatsimAuthUrl(deepLink) ?? getNavigraphAuthUrl(deepLink);
-    if (!authUrl || authUrl === currentAuthUrl) return;
+    if (!authUrl || authUrl === currentAuthUrl || isAuthRequestLocked) return;
 
     currentAuthUrl = authUrl;
+    lockAuthRequest();
 
     if (mainWindow && !mainWindow.isDestroyed()) {
         loadAppUrl(mainWindow, authUrl);
@@ -192,6 +205,15 @@ const createWindow = async () => {
     mainWindow = win;
     addAppRequestHeaders(win);
 
+    win.webContents.session.webRequest.onCompleted(
+        { urls: [`${ domain }/*`] },
+        details => {
+            if (details.resourceType !== 'mainFrame' || details.statusCode < 500 || details.url === domain || details.url === `${ domain }/`) return;
+
+            void loadAppUrl(win, domain);
+        },
+    );
+
     win.on('close', event => {
         if (store.get('tray') === true && !isQuitting) {
             event.preventDefault();
@@ -212,6 +234,11 @@ const createWindow = async () => {
     win.webContents.setWindowOpenHandler(({ url }) => {
         if (!url.startsWith(domain)) {
             shell.openExternal(url);
+            return { action: 'deny' };
+        }
+
+        if (url.startsWith(apiUrl)) {
+            void loadAppUrl(win, domain);
             return { action: 'deny' };
         }
 
@@ -242,18 +269,36 @@ const createWindow = async () => {
             event.preventDefault();
             return;
         }
+
+        if (event.url.startsWith(apiUrl) && event.url !== currentAuthUrl) {
+            event.preventDefault();
+            void loadAppUrl(win, domain);
+            return;
+        }
     }));
 
     const storeLastUrl = (url: string) => {
-        if (url.startsWith(domain)) store.set('lastUrl', url);
+        if (url.startsWith(domain) && !url.startsWith(apiUrl)) store.set('lastUrl', url);
     };
 
     win.webContents.on('did-navigate', (_event, url) => {
+        if (url.startsWith(apiUrl)) {
+            void loadAppUrl(win, domain);
+            return;
+        }
+
         storeLastUrl(url);
     });
 
     win.webContents.on('did-navigate-in-page', (_event, url, isMainFrame) => {
-        if (isMainFrame) storeLastUrl(url);
+        if (!isMainFrame) return;
+
+        if (url.startsWith(apiUrl)) {
+            void loadAppUrl(win, domain);
+            return;
+        }
+
+        storeLastUrl(url);
     });
 
     win.webContents.on('before-input-event', (event, input) => {
@@ -272,7 +317,7 @@ const createWindow = async () => {
     const lastUrl = store.get('lastUrl');
     let initialUrl = pendingAuthUrl ?? store.get('lastUrl') ?? domain;
 
-    if (!pendingAuthUrl && lastUrl && !lastUrl.startsWith(domain)) initialUrl = domain;
+    if (!pendingAuthUrl && lastUrl && (!lastUrl.startsWith(domain) || lastUrl.startsWith(apiUrl))) initialUrl = domain;
 
     pendingAuthUrl = undefined;
 

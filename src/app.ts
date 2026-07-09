@@ -36,8 +36,6 @@ const icon = nativeImage.createFromPath(getAssetPath(process.platform === 'win32
 let mainWindow: BrowserWindow | undefined;
 let pendingAuthUrl: string | undefined;
 let currentAuthUrl: string | undefined;
-let isAuthRequestLocked = false;
-let authRequestTimeout: NodeJS.Timeout | undefined;
 let isQuitting = false;
 let isMainWindowVisible: boolean | undefined;
 
@@ -125,23 +123,11 @@ const showWindow = (win: BrowserWindow) => {
     win.focus();
 };
 
-const lockAuthRequest = () => {
-    isAuthRequestLocked = true;
-
-    if (authRequestTimeout) clearTimeout(authRequestTimeout);
-
-    authRequestTimeout = setTimeout(() => {
-        isAuthRequestLocked = false;
-        authRequestTimeout = undefined;
-    }, 10000);
-};
-
 const handleDeeplinkAuth = (deepLink: string) => {
     const authUrl = getVatsimAuthUrl(deepLink) ?? getNavigraphAuthUrl(deepLink);
-    if (!authUrl || authUrl === currentAuthUrl || isAuthRequestLocked) return;
+    if (!authUrl || authUrl === currentAuthUrl) return;
 
     currentAuthUrl = authUrl;
-    lockAuthRequest();
 
     if (mainWindow && !mainWindow.isDestroyed()) {
         loadAppUrl(mainWindow, authUrl);
@@ -207,7 +193,12 @@ const createWindow = async () => {
     win.webContents.session.webRequest.onCompleted(
         { urls: [`${ domain }/api*`] },
         details => {
-            if (details.resourceType !== 'mainFrame' || details.statusCode < 500) return;
+            if (
+                details.resourceType !== 'mainFrame' ||
+                details.statusCode < 500 ||
+                details.url.startsWith(`${ domain }/api/auth`) ||
+                details.url.startsWith(`${ domain }/api/logout`)
+            ) return;
 
             void loadAppUrl(win, domain);
         },

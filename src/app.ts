@@ -8,6 +8,8 @@ import * as path from 'node:path';
 import { getNavigraphAuthUrl, getVatsimAuthUrl } from './utils/auth';
 import { logAutoUpdate } from './utils/auto-updater-log';
 import { startServer } from './utils/server';
+import { isApiUrl, loadAppUrl, resetAppWindow } from './utils/navigation';
+import { initApplicationMenu } from './utils/application-menu';
 
 // @ts-expect-error Non-esm
 if (Squirell.default) {
@@ -99,13 +101,6 @@ const notifyVisibilityChange = (win: BrowserWindow) => {
     win.webContents.send('efbX', isVisible ? 'resume' : 'pause');
 };
 
-const loadAppUrl = (win: BrowserWindow, url: string) => {
-    return win.loadURL(url, {
-        extraHeaders: `radarWebview: ${ app.getVersion() }
-`,
-    });
-};
-
 const addAppRequestHeaders = (win: BrowserWindow) => {
     win.webContents.session.webRequest.onBeforeSendHeaders(
         { urls: [`${ domain }/*`] },
@@ -195,12 +190,10 @@ const createWindow = async () => {
         details => {
             if (
                 details.resourceType !== 'mainFrame' ||
-                details.statusCode < 500 ||
-                details.url.startsWith(`${ domain }/api/auth`) ||
-                details.url.startsWith(`${ domain }/api/logout`)
+                details.statusCode < 500
             ) return;
 
-            void loadAppUrl(win, domain);
+            void resetAppWindow(win);
         },
     );
 
@@ -257,7 +250,7 @@ const createWindow = async () => {
     }));
 
     const storeLastUrl = (url: string) => {
-        if (url.startsWith(domain)) store.set('lastUrl', url);
+        if (url.startsWith(domain) && !isApiUrl(url)) store.set('lastUrl', url);
     };
 
     win.webContents.on('did-navigate', (_event, url) => {
@@ -279,14 +272,16 @@ const createWindow = async () => {
         if (!isSystemReload) return;
 
         event.preventDefault();
-        store.delete('lastUrl');
-        void loadAppUrl(win, domain);
+        void resetAppWindow(win);
     });
 
     const lastUrl = store.get('lastUrl');
     let initialUrl = pendingAuthUrl ?? store.get('lastUrl') ?? domain;
 
-    if (!pendingAuthUrl && lastUrl && !lastUrl.startsWith(domain)) initialUrl = domain;
+    if (lastUrl && (!lastUrl.startsWith(domain) || isApiUrl(lastUrl))) {
+        store.delete('lastUrl');
+        if (!pendingAuthUrl) initialUrl = domain;
+    }
 
     pendingAuthUrl = undefined;
 
@@ -332,6 +327,7 @@ const onWindowAllClosed = () => {
 
 if (hasSingleInstanceLock) {
     app.whenReady().then(() => {
+        initApplicationMenu();
         createWindow();
         initAutoUpdates();
 

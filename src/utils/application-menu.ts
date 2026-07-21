@@ -18,8 +18,8 @@ export const initApplicationMenu = () => {
                     label: 'Force Reload',
                     accelerator: 'CmdOrCtrl+Shift+R',
                     click: (_menuItem, browserWindow) => {
-                        const win = browserWindow ??
-                            BrowserWindow.getFocusedWindow() ??
+                        const menuWindow = browserWindow instanceof BrowserWindow ? browserWindow : undefined;
+                        const win = menuWindow ?? BrowserWindow.getFocusedWindow() ??
                             BrowserWindow.getAllWindows()[0];
 
                         if (win && !win.isDestroyed()) void resetAppWindow(win);

@@ -29,7 +29,7 @@
     "@eslint/js": "10.0.1",
     "@stylistic/eslint-plugin": "5.10.0",
     "@types/electron-squirrel-startup": "1.0.2",
-    "@typescript-eslint/parser": "8.64.0",
+    "@typescript-eslint/parser": "8.65.0",
     "electron": "43.1.1",
     "electron-squirrel-startup": "1.0.1",
     "electron-store": "11.0.2",
@@ -37,7 +37,7 @@
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-unused-imports": "4.4.1",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.64.0",
+    "typescript-eslint": "8.65.0",
     "vite": "8.1.5"
   },
   "resolutions": {

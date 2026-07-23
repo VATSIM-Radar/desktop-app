@@ -7307,12 +7307,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"srvx@npm:0.11.22":
-  version: 0.11.22
-  resolution: "srvx@npm:0.11.22"
+"srvx@npm:0.12.4":
+  version: 0.12.4
+  resolution: "srvx@npm:0.12.4"
   bin:
     srvx: bin/srvx.mjs
-  checksum: 10c0/aae81d7aa2d43e23fd483088533ad471ee2cd28f2065b84119635fd9feabdd4bab94fc06b8d198c205e3613b552624ccd2015c887ba9ca415d9c51dde7e6ec79
+  checksum: 10c0/2a9a0ed86ffd385a77015cc14995d5420befb8f0e42b09d1f49956b9f553e19d777f9d567815f5a34954552ceef98b76193a8fb0e3a41f1f46835888a0c7ed12
   languageName: node
   linkType: hard
 
@@ -8181,7 +8181,7 @@ __metadata:
     eslint-plugin-unused-imports: "npm:4.4.1"
     express: "npm:5.2.1"
     rou3: "npm:0.9.1"
-    srvx: "npm:0.11.22"
+    srvx: "npm:0.12.4"
     typescript: "npm:7.0.2"
     typescript-eslint: "npm:8.65.0"
     update-electron-app: "npm:3.3.0"

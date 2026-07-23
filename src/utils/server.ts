@@ -99,6 +99,16 @@ export function startServer() {
                                     : undefined,
                             state: body.state,
                             startTimestamp: body.startTimestamp ? new Date(body.startTimestamp) : undefined,
+                            buttons: (body.pilotCallsign || body.atcCallsign)
+                                ? [
+                                    {
+                                        label: `View ${ body.pilotCallsign || body.atcCallsign }`,
+                                        url: body.pilotCallsign
+                                            ? `https://vatsim-radar.com/?pilot=${ body.pilotCallsign }`
+                                            : `https://vatsim-radar.com/?atc=${ body.atcCallsign }`,
+                                    },
+                                ]
+                                : undefined,
                         } satisfies SetActivity;
 
 

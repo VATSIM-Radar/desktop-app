@@ -238,7 +238,9 @@ const createWindow = async () => {
         if (event.url.startsWith('file://')) return;
 
         if (event.url.includes('/redirect')) {
-            shell.openExternal(`${ event.url }?app=1`);
+            const url = new URL(event.url);
+            url.searchParams.set('app', '1');
+            shell.openExternal(url.toString());
             event.preventDefault();
         }
 

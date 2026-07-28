@@ -15,6 +15,8 @@ import { startServer } from "./utils/server";
 import { isApiUrl, loadAppUrl, resetAppWindow } from "./utils/navigation";
 import { initApplicationMenu } from "./utils/application-menu";
 import { startWebSocketServer, stopWebSocketServer } from "./websocket/server";
+import { sendBookmarks } from "./websocket/send-bookmarks";
+import { BookmarksMessage } from "./websocket/messages";
 
 // @ts-expect-error Non-esm
 if (Squirell.default) {
@@ -399,5 +401,11 @@ ipcMain.on("tray:set", (_event, value: boolean) => {
 });
 
 ipcMain.handle("tray:get", (): boolean => store.get("tray") === true);
+
+ipcMain.on("bookmarks", (_event, message) => {
+  const bookmarksMessage = message as BookmarksMessage;
+  console.log("Received bookmarks message from render process:", message);
+  sendBookmarks(message.data.bookmarks);
+});
 
 startServer();

@@ -1,4 +1,4 @@
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 import { isGetBookmarksMessage, WebsocketMessage } from "./messages";
 import { handleGetBookmarks } from "./get-bookmarks";
 import { BrowserWindow } from "electron";
@@ -40,6 +40,12 @@ export function stopWebSocketServer() {
     wss.close();
     wss = undefined;
   }
+}
+
+export function getConnectedClients(): WebSocket[] {
+  if (!wss) return [];
+
+  return Array.from(wss.clients) as WebSocket[];
 }
 
 function processMessage(message: WebsocketMessage) {

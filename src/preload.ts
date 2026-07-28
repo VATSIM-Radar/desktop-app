@@ -1,4 +1,6 @@
 import { ipcRenderer, contextBridge } from "electron";
+import { BookmarksMessage } from "./websocket/messages";
+import { sendBookmarks } from "./websocket/send-bookmarks";
 
 const appOrigin = import.meta.env.VITE_DOMAIN
   ? new URL(import.meta.env.VITE_DOMAIN).origin
@@ -15,18 +17,23 @@ window.addEventListener("message", (event) => {
 
   if (event.data?.type === "reload") {
     ipcRenderer.send("reload");
+  } else if (event.data?.type === "bookmarks") {
+    const message = event.data as BookmarksMessage;
+    ipcRenderer.send("bookmarks", message);
   } else if (event.data?.type === "tray") {
     ipcRenderer.send("tray:set", event.data.value === true);
   }
 });
 
 ipcRenderer.on("efbX", (_event, action: "pause" | "resume") => {
-  console.log(`Received efbX action from main process: ${action}`);
   window.postMessage({ type: "efbX", action }, appOrigin ?? "*");
 });
 
 ipcRenderer.on("get-bookmarks", (_event, message) => {
-  console.log("Received get-bookmarks message from main process:", message);
+  console.log(
+    "Received get-bookmarks message from main process:",
+    JSON.stringify(message),
+  );
   window.postMessage({ type: "get-bookmarks", message }, appOrigin ?? "*");
 });
 

@@ -239,6 +239,10 @@ const createWindow = async () => {
   }
   win.show();
 
+  if (getWebPreferences().devTools) {
+    win.webContents.openDevTools();
+  }
+
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (!url.startsWith(domain)) {
       shell.openExternal(url);

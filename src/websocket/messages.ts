@@ -1,6 +1,6 @@
 export interface Bookmark {
   label: string;
-  value: string;
+  value: number;
   order: number;
 }
 

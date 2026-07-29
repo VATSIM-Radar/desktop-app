@@ -1,6 +1,9 @@
 import { WebSocketServer, WebSocket } from "ws";
-import { isGetBookmarksMessage, WebsocketMessage } from "./messages";
-import { handleGetBookmarks } from "./get-bookmarks";
+import {
+  isActivateBookmarkMessage,
+  isGetBookmarksMessage,
+  WebsocketMessage,
+} from "./messages";
 import { BrowserWindow } from "electron";
 
 const WS_PORT = 48073;
@@ -54,7 +57,9 @@ function processMessage(message: WebsocketMessage) {
   console.log("Processing message:", message);
 
   if (isGetBookmarksMessage(message)) {
-    handleGetBookmarks(message);
+    getWindow().webContents.send("get-bookmarks", message);
+  } else if (isActivateBookmarkMessage(message)) {
+    getWindow().webContents.send("activate-bookmark", message);
   } else {
     console.log("Received unknown message: ", message);
   }

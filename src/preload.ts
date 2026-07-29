@@ -34,7 +34,15 @@ ipcRenderer.on("get-bookmarks", (_event, message) => {
     "Received get-bookmarks message from main process:",
     JSON.stringify(message),
   );
-  window.postMessage({ type: "get-bookmarks", message }, appOrigin ?? "*");
+  window.postMessage(message, appOrigin ?? "*");
+});
+
+ipcRenderer.on("activate-bookmark", (_event, message) => {
+  console.log(
+    "Received activate-bookmark message from main process:",
+    JSON.stringify(message),
+  );
+  window.postMessage(message, appOrigin ?? "*");
 });
 
 contextBridge.exposeInMainWorld("vatsimRadar", {

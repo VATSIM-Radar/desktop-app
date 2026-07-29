@@ -1,6 +1,5 @@
 import { ipcRenderer, contextBridge } from "electron";
-import { BookmarksMessage } from "./websocket/messages";
-import { sendBookmarks } from "./websocket/send-bookmarks";
+import { BookmarksMessage, DashboardsMessage } from "./websocket/messages";
 
 const appOrigin = import.meta.env.VITE_DOMAIN
   ? new URL(import.meta.env.VITE_DOMAIN).origin
@@ -18,8 +17,9 @@ window.addEventListener("message", (event) => {
   if (event.data?.type === "reload") {
     ipcRenderer.send("reload");
   } else if (event.data?.type === "bookmarks") {
-    const message = event.data as BookmarksMessage;
-    ipcRenderer.send("bookmarks", message);
+    ipcRenderer.send("bookmarks", event.data as BookmarksMessage);
+  } else if (event.data?.type === "dashboards") {
+    ipcRenderer.send("dashboards", event.data as DashboardsMessage);
   } else if (event.data?.type === "tray") {
     ipcRenderer.send("tray:set", event.data.value === true);
   }
@@ -37,9 +37,25 @@ ipcRenderer.on("get-bookmarks", (_event, message) => {
   window.postMessage(message, appOrigin ?? "*");
 });
 
+ipcRenderer.on("get-dashboards", (_event, message) => {
+  console.log(
+    "Received get-dashboards message from main process:",
+    JSON.stringify(message),
+  );
+  window.postMessage(message, appOrigin ?? "*");
+});
+
 ipcRenderer.on("activate-bookmark", (_event, message) => {
   console.log(
     "Received activate-bookmark message from main process:",
+    JSON.stringify(message),
+  );
+  window.postMessage(message, appOrigin ?? "*");
+});
+
+ipcRenderer.on("activate-dashboard", (_event, message) => {
+  console.log(
+    "Received activate-dashboard message from main process:",
     JSON.stringify(message),
   );
   window.postMessage(message, appOrigin ?? "*");

@@ -1,7 +1,9 @@
 import { WebSocketServer, WebSocket } from "ws";
 import {
   isActivateBookmarkMessage,
+  isActivateDashboardMessage,
   isGetBookmarksMessage,
+  isGetDashboardsMessage,
   WebsocketMessage,
 } from "./messages";
 import { BrowserWindow } from "electron";
@@ -57,9 +59,13 @@ function processMessage(message: WebsocketMessage) {
   console.log("Processing message:", message);
 
   if (isGetBookmarksMessage(message)) {
-    getWindow().webContents.send("get-bookmarks", message);
+    getWindow().webContents.send(message.type, message);
   } else if (isActivateBookmarkMessage(message)) {
-    getWindow().webContents.send("activate-bookmark", message);
+    getWindow().webContents.send(message.type, message);
+  } else if (isGetDashboardsMessage(message)) {
+    getWindow().webContents.send(message.type, message);
+  } else if (isActivateDashboardMessage(message)) {
+    getWindow().webContents.send(message.type, message);
   } else {
     console.log("Received unknown message: ", message);
   }

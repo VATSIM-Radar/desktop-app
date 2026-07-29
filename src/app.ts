@@ -17,6 +17,7 @@ import { initApplicationMenu } from "./utils/application-menu";
 import { startWebSocketServer, stopWebSocketServer } from "./websocket/server";
 import { sendBookmarks } from "./websocket/send-bookmarks";
 import { BookmarksMessage } from "./websocket/messages";
+import { sendDashboards } from "./websocket/send-dashboards";
 
 // @ts-expect-error Non-esm
 if (Squirell.default) {
@@ -404,6 +405,10 @@ ipcMain.handle("tray:get", (): boolean => store.get("tray") === true);
 
 ipcMain.on("bookmarks", (_event, message) => {
   sendBookmarks(message.data.bookmarks);
+});
+
+ipcMain.on("dashboards", (_event, message) => {
+  sendDashboards(message.data.dashboards);
 });
 
 startServer();

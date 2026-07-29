@@ -3,7 +3,7 @@ import { isGetBookmarksMessage, WebsocketMessage } from "./messages";
 import { handleGetBookmarks } from "./get-bookmarks";
 import { BrowserWindow } from "electron";
 
-const WS_PORT = 8443;
+const WS_PORT = 48073;
 
 let window: BrowserWindow | undefined;
 let wss: WebSocketServer | undefined;
@@ -24,6 +24,8 @@ export function startWebSocketServer(mainWindow: BrowserWindow) {
   wss = new WebSocketServer({ port: WS_PORT });
 
   wss.on("connection", function connection(ws) {
+    console.log("New WebSocket client connected");
+
     ws.on("error", console.error);
 
     ws.on("message", (data) => {

@@ -1,11 +1,5 @@
 import { WebSocketServer, WebSocket } from "ws";
-import {
-  isActivateBookmarkMessage,
-  isActivateDashboardMessage,
-  isGetBookmarksMessage,
-  isGetDashboardsMessage,
-  WebsocketMessage,
-} from "./messages";
+import { isForwardableMessage, WebsocketMessage } from "./messages";
 import { BrowserWindow } from "electron";
 
 const WS_PORT = 48073;
@@ -13,6 +7,11 @@ const WS_PORT = 48073;
 let window: BrowserWindow | undefined;
 let wss: WebSocketServer | undefined;
 
+/**
+ * Provides access to the window used for IPC communication with the renderer.
+ * Throws an error if the window isn't set.
+ * @returns The window that handles IPC with the renderer.
+ */
 export function getWindow(): BrowserWindow {
   if (!window) {
     throw new Error("WebSocket server window is not initialized");
@@ -21,16 +20,16 @@ export function getWindow(): BrowserWindow {
   return window;
 }
 
+/**
+ * Starts the websocket server to handle messages from clients.
+ * @param mainWindow The window which handles IPC messages with the renderer.
+ */
 export function startWebSocketServer(mainWindow: BrowserWindow) {
   window = mainWindow;
-
-  console.log(`Window received is ${window?.title}`);
 
   wss = new WebSocketServer({ port: WS_PORT });
 
   wss.on("connection", function connection(ws) {
-    console.log("New WebSocket client connected");
-
     ws.on("error", console.error);
 
     ws.on("message", (data) => {
@@ -42,6 +41,9 @@ export function startWebSocketServer(mainWindow: BrowserWindow) {
   console.log(`WebSocket server started on port ${WS_PORT}`);
 }
 
+/**
+ * Closes the websocket server.
+ */
 export function stopWebSocketServer() {
   if (wss) {
     wss.close();
@@ -49,24 +51,29 @@ export function stopWebSocketServer() {
   }
 }
 
+/**
+ * Gets the list of connected clients.
+ * @returns The list of connected clients.
+ */
 export function getConnectedClients(): WebSocket[] {
   if (!wss) return [];
 
   return Array.from(wss.clients) as WebSocket[];
 }
 
+/**
+ * Takes incoming websocket messages and routes it to the appropriate
+ * function for handling.
+ * @param message The incoming websocket message.
+ */
 function processMessage(message: WebsocketMessage) {
-  console.log("Processing message:", message);
-
-  if (isGetBookmarksMessage(message)) {
+  // Check to make sure the incoming websocket message is a supported
+  // message that's allowed to be forwarded. This prevents any random websocket
+  // message from getting passed along.
+  if (isForwardableMessage(message)) {
     getWindow().webContents.send(message.type, message);
-  } else if (isActivateBookmarkMessage(message)) {
-    getWindow().webContents.send(message.type, message);
-  } else if (isGetDashboardsMessage(message)) {
-    getWindow().webContents.send(message.type, message);
-  } else if (isActivateDashboardMessage(message)) {
-    getWindow().webContents.send(message.type, message);
-  } else {
-    console.log("Received unknown message: ", message);
+    return;
   }
+
+  console.log("Received unknown message: ", message);
 }

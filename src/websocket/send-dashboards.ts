@@ -1,9 +1,11 @@
 import { Dashboard, DashboardsMessage } from "./messages";
 import { getConnectedClients } from "./server";
 
+/**
+ * Sends a list of dashboards to all connected websocket clients.
+ * @param dashboards The dashboards to send.
+ */
 export function sendDashboards(dashboards: Dashboard[]) {
-  console.log("Sending dashboards: ", dashboards);
-
   const message = {
     type: "dashboards",
     data: {

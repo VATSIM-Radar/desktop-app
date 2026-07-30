@@ -1,9 +1,11 @@
 import { Bookmark, BookmarksMessage } from "./messages";
 import { getConnectedClients } from "./server";
 
+/**
+ * Sends a list of bookmarks to all connected websocket clients.
+ * @param bookmarks The bookmarks to send.
+ */
 export function sendBookmarks(bookmarks: Bookmark[]) {
-  console.log("Sending bookmarks: ", bookmarks);
-
   const message = {
     type: "bookmarks",
     data: {

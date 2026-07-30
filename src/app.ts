@@ -401,14 +401,20 @@ ipcMain.on("tray:set", (_event, value: boolean) => {
   store.set("tray", value);
 });
 
-ipcMain.handle("tray:get", (): boolean => store.get("tray") === true);
-
+// The bookmarks message comes from the renderer in response to a
+// get-bookmarks request. Pass the received bookmarks to connected
+// websocket clients.
 ipcMain.on("bookmarks", (_event, message) => {
   sendBookmarks(message.data.bookmarks);
 });
 
+// The dashboards message comes from the renderer in response to a
+// get-dashboards request. Pass the received dashboards to connected
+// websocket clients.
 ipcMain.on("dashboards", (_event, message) => {
   sendDashboards(message.data.dashboards);
 });
+
+ipcMain.handle("tray:get", (): boolean => store.get("tray") === true);
 
 startServer();

@@ -53,32 +53,21 @@ export type WebsocketMessage =
   | GetBookmarksMessage
   | GetDashboardsMessage;
 
-export function isGetBookmarksMessage(
-  message: WebsocketMessage,
-): message is GetBookmarksMessage {
-  return message && message.type === "get-bookmarks";
-}
+// These message types are the messages that get forwarded directly
+// to the renderer for processing.
+const forwardableMessageTypes = new Set<WebsocketMessage["type"]>([
+  "get-bookmarks",
+  "activate-bookmark",
+  "get-dashboards",
+  "activate-dashboard",
+]);
 
-export function isGetDashboardsMessage(
-  message: WebsocketMessage,
-): message is GetDashboardsMessage {
-  return message && message.type === "get-dashboards";
-}
-
-export function isActivateBookmarkMessage(
-  message: WebsocketMessage,
-): message is ActivateBookmarkMessage {
-  return message && message.type === "activate-bookmark";
-}
-
-export function isBookmarksMessage(
-  message: WebsocketMessage,
-): message is BookmarksMessage {
-  return message && message.type === "bookmarks";
-}
-
-export function isActivateDashboardMessage(
-  message: WebsocketMessage,
-): message is ActivateDashboardMessage {
-  return message && message.type === "activate-dashboard";
+/**
+ * Checks to see if an incoming message should be forwarded to the renderer
+ * for processing.
+ * @param message The message to verify
+ * @returns True if the message can be forwarded to the renderer for processing.
+ */
+export function isForwardableMessage(message: WebsocketMessage) {
+  return forwardableMessageTypes.has(message.type);
 }

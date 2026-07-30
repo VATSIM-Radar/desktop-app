@@ -29,38 +29,30 @@ ipcRenderer.on("efbX", (_event, action: "pause" | "resume") => {
   window.postMessage({ type: "efbX", action }, appOrigin ?? "*");
 });
 
-ipcRenderer.on("get-bookmarks", (_event, message) => {
-  console.log(
-    "Received get-bookmarks message from main process:",
-    JSON.stringify(message),
-  );
-  window.postMessage(message, appOrigin ?? "*");
-});
-
-ipcRenderer.on("get-dashboards", (_event, message) => {
-  console.log(
-    "Received get-dashboards message from main process:",
-    JSON.stringify(message),
-  );
-  window.postMessage(message, appOrigin ?? "*");
-});
-
-ipcRenderer.on("activate-bookmark", (_event, message) => {
-  console.log(
-    "Received activate-bookmark message from main process:",
-    JSON.stringify(message),
-  );
-  window.postMessage(message, appOrigin ?? "*");
-});
-
-ipcRenderer.on("activate-dashboard", (_event, message) => {
-  console.log(
-    "Received activate-dashboard message from main process:",
-    JSON.stringify(message),
-  );
-  window.postMessage(message, appOrigin ?? "*");
-});
-
 contextBridge.exposeInMainWorld("vatsimRadar", {
   getTrayValue: (): Promise<boolean> => ipcRenderer.invoke("tray:get"),
+});
+
+// Websocket request from the main app for a list of bookmarks. Pass
+// the incoming message on to the renderer for processing.
+ipcRenderer.on("get-bookmarks", (_event, message) => {
+  window.postMessage(message, appOrigin ?? "*");
+});
+
+// Websocket request from the main app for a list of dashboards. Pass
+// the incoming message on to the renderer for processing.
+ipcRenderer.on("get-dashboards", (_event, message) => {
+  window.postMessage(message, appOrigin ?? "*");
+});
+
+// Websocket request from the main app to activate a bookmark. Pass
+// the incoming message on to the renderer for processing.
+ipcRenderer.on("activate-bookmark", (_event, message) => {
+  window.postMessage(message, appOrigin ?? "*");
+});
+
+// Websocket request from the main app to activate a dashboard. Pass
+// the incoming message on to the renderer for processing.
+ipcRenderer.on("activate-dashboard", (_event, message) => {
+  window.postMessage(message, appOrigin ?? "*");
 });

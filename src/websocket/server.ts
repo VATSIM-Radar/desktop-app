@@ -13,11 +13,11 @@ let wss: WebSocketServer | undefined;
  * @returns The window that handles IPC with the renderer.
  */
 export function getWindow(): BrowserWindow {
-  if (!window) {
-    throw new Error('WebSocket server window is not initialized');
-  }
+    if (!window) {
+        throw new Error('WebSocket server window is not initialized');
+    }
 
-  return window;
+    return window;
 }
 
 /**
@@ -25,30 +25,30 @@ export function getWindow(): BrowserWindow {
  * @param mainWindow The window which handles IPC messages with the renderer.
  */
 export function startWebSocketServer(mainWindow: BrowserWindow) {
-  window = mainWindow;
+    window = mainWindow;
 
-  wss = new WebSocketServer({ port: WS_PORT });
+    wss = new WebSocketServer({ port: WS_PORT });
 
-  wss.on('connection', function connection(ws) {
-    ws.on('error', console.error);
+    wss.on('connection', function connection(ws) {
+        ws.on('error', console.error);
 
-    ws.on('message', (data) => {
-      const message = JSON.parse(data.toString()) as WebsocketMessage;
-      processMessage(message);
+        ws.on('message', (data) => {
+            const message = JSON.parse(data.toString()) as WebsocketMessage;
+            processMessage(message);
+        });
     });
-  });
 
-  console.log(`WebSocket server started on port ${WS_PORT}`);
+    console.log(`WebSocket server started on port ${WS_PORT}`);
 }
 
 /**
  * Closes the websocket server.
  */
 export function stopWebSocketServer() {
-  if (wss) {
-    wss.close();
-    wss = undefined;
-  }
+    if (wss) {
+        wss.close();
+        wss = undefined;
+    }
 }
 
 /**
@@ -56,9 +56,9 @@ export function stopWebSocketServer() {
  * @returns The list of connected clients.
  */
 export function getConnectedClients(): WebSocket[] {
-  if (!wss) return [];
+    if (!wss) return [];
 
-  return Array.from(wss.clients) as WebSocket[];
+    return Array.from(wss.clients) as WebSocket[];
 }
 
 /**
@@ -67,13 +67,13 @@ export function getConnectedClients(): WebSocket[] {
  * @param message The incoming websocket message.
  */
 function processMessage(message: WebsocketMessage) {
-  // Check to make sure the incoming websocket message is a supported
-  // message that's allowed to be forwarded. This prevents any random websocket
-  // message from getting passed along.
-  if (isForwardableMessage(message)) {
-    getWindow().webContents.send(message.type, message);
-    return;
-  }
+    // Check to make sure the incoming websocket message is a supported
+    // message that's allowed to be forwarded. This prevents any random websocket
+    // message from getting passed along.
+    if (isForwardableMessage(message)) {
+        getWindow().webContents.send(message.type, message);
+        return;
+    }
 
-  console.log('Received unknown message: ', message);
+    console.log('Received unknown message: ', message);
 }

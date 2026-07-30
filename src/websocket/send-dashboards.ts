@@ -6,15 +6,15 @@ import { getConnectedClients } from './server';
  * @param dashboards The dashboards to send.
  */
 export function sendDashboards(dashboards: Dashboard[]) {
-  const message = {
-    type: 'dashboards',
-    data: {
-      dashboards,
-    },
-  } as DashboardsMessage;
+    const message = {
+        type: 'dashboards',
+        data: {
+            dashboards,
+        },
+    } as DashboardsMessage;
 
-  const clients = getConnectedClients();
-  clients.forEach((client) => {
-    client.send(JSON.stringify(message));
-  });
+    const clients = getConnectedClients();
+    clients.forEach((client) => {
+        client.send(JSON.stringify(message));
+    });
 }

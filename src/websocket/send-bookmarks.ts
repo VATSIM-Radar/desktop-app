@@ -6,15 +6,15 @@ import { getConnectedClients } from './server';
  * @param bookmarks The bookmarks to send.
  */
 export function sendBookmarks(bookmarks: Bookmark[]) {
-  const message = {
-    type: 'bookmarks',
-    data: {
-      bookmarks,
-    },
-  } as BookmarksMessage;
+    const message = {
+        type: 'bookmarks',
+        data: {
+            bookmarks,
+        },
+    } as BookmarksMessage;
 
-  const clients = getConnectedClients();
-  clients.forEach((client) => {
-    client.send(JSON.stringify(message));
-  });
+    const clients = getConnectedClients();
+    clients.forEach((client) => {
+        client.send(JSON.stringify(message));
+    });
 }

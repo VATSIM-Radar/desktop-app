@@ -1,65 +1,65 @@
 export interface Bookmark {
-  label: string;
-  id: number;
-  order: number;
+    label: string;
+    id: number;
+    order: number;
 }
 
 export interface Dashboard {
-  name: string;
-  id: number;
+    name: string;
+    id: number;
 }
 
 export interface GetBookmarksMessage {
-  type: 'get-bookmarks';
+    type: 'get-bookmarks';
 }
 
 export interface GetDashboardsMessage {
-  type: 'get-dashboards';
+    type: 'get-dashboards';
 }
 
 export interface ActivateBookmarkMessage {
-  type: 'activate-bookmark';
-  data: {
-    id: number;
-  };
+    type: 'activate-bookmark';
+    data: {
+        id: number;
+    };
 }
 
 export interface ActivateDashboardMessage {
-  type: 'activate-dashboard';
-  data: {
-    id: number;
-  };
+    type: 'activate-dashboard';
+    data: {
+        id: number;
+    };
 }
 
 export interface BookmarksMessage {
-  type: 'bookmarks';
-  data: {
-    bookmarks: Bookmark[];
-  };
+    type: 'bookmarks';
+    data: {
+        bookmarks: Bookmark[];
+    };
 }
 
 export interface DashboardsMessage {
-  type: 'dashboards';
-  data: {
-    dashboards: Dashboard[];
-  };
+    type: 'dashboards';
+    data: {
+        dashboards: Dashboard[];
+    };
 }
 
 export type WebsocketMessage =
-  | ActivateBookmarkMessage
-  | ActivateDashboardMessage
-  | BookmarksMessage
-  | DashboardsMessage
-  | GetBookmarksMessage
-  | GetDashboardsMessage;
+    | ActivateBookmarkMessage
+    | ActivateDashboardMessage
+    | BookmarksMessage
+    | DashboardsMessage
+    | GetBookmarksMessage
+    | GetDashboardsMessage;
 
 // These message types are the messages that get forwarded directly
 // to the renderer for processing.
 const forwardableMessageTypes = new Set<WebsocketMessage['type']>([
-  'get-bookmarks',
-  'activate-bookmark',
-  'get-dashboards',
-  'activate-dashboard',
+    'get-bookmarks',
+    'activate-bookmark',
+    'get-dashboards',
+    'activate-dashboard',
 ]);
 
 /**
@@ -69,5 +69,5 @@ const forwardableMessageTypes = new Set<WebsocketMessage['type']>([
  * @returns True if the message can be forwarded to the renderer for processing.
  */
 export function isForwardableMessage(message: WebsocketMessage) {
-  return forwardableMessageTypes.has(message.type);
+    return forwardableMessageTypes.has(message.type);
 }

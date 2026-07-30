@@ -1,10 +1,6 @@
 import * as Squirell from 'electron-squirrel-startup';
 import { app, shell, BrowserWindow, ipcMain, autoUpdater } from 'electron';
-import {
-    makeUserNotifier,
-    updateElectronApp,
-    UpdateSourceType,
-} from 'update-electron-app';
+import { makeUserNotifier, updateElectronApp, UpdateSourceType } from 'update-electron-app';
 import { addTray } from './utils/tray';
 import { nativeImage } from 'electron/common';
 import { store } from './utils/store';
@@ -70,15 +66,9 @@ const initAutoUpdates = () => {
         updateFeedBaseUrl,
     });
 
-    autoUpdater.on('error', (error) =>
-        logAutoUpdate(app, 'error', 'error', error),
-    );
-    autoUpdater.on('checking-for-update', () =>
-        logAutoUpdate(app, 'info', 'checking-for-update'),
-    );
-    autoUpdater.on('update-available', () =>
-        logAutoUpdate(app, 'info', 'update-available'),
-    );
+    autoUpdater.on('error', (error) => logAutoUpdate(app, 'error', 'error', error));
+    autoUpdater.on('checking-for-update', () => logAutoUpdate(app, 'info', 'checking-for-update'));
+    autoUpdater.on('update-available', () => logAutoUpdate(app, 'info', 'update-available'));
     autoUpdater.on('update-not-available', () =>
         logAutoUpdate(app, 'info', 'update-not-available'),
     );
@@ -106,14 +96,10 @@ const initAutoUpdates = () => {
             laterButtonText: 'Later',
         }),
         logger: {
-            log: (...messages: unknown[]) =>
-                logAutoUpdate(app, 'info', ...messages),
-            info: (...messages: unknown[]) =>
-                logAutoUpdate(app, 'info', ...messages),
-            error: (...messages: unknown[]) =>
-                logAutoUpdate(app, 'error', ...messages),
-            warn: (...messages: unknown[]) =>
-                logAutoUpdate(app, 'warn', ...messages),
+            log: (...messages: unknown[]) => logAutoUpdate(app, 'info', ...messages),
+            info: (...messages: unknown[]) => logAutoUpdate(app, 'info', ...messages),
+            error: (...messages: unknown[]) => logAutoUpdate(app, 'error', ...messages),
+            warn: (...messages: unknown[]) => logAutoUpdate(app, 'warn', ...messages),
         },
     });
 };
@@ -177,9 +163,7 @@ if (!hasSingleInstanceLock) {
 
 if (hasSingleInstanceLock) {
     app.on('second-instance', (_event, commandLine) => {
-        const deepLink = commandLine.find((argument) =>
-            argument.startsWith('vatsim-radar:'),
-        );
+        const deepLink = commandLine.find((argument) => argument.startsWith('vatsim-radar:'));
         if (deepLink) handleDeeplinkAuth(deepLink);
 
         const win = BrowserWindow.getAllWindows()[0];
@@ -191,9 +175,7 @@ if (hasSingleInstanceLock) {
         handleDeeplinkAuth(url);
     });
 
-    const startupDeepLink = process.argv.find((argument) =>
-        argument.startsWith('vatsim-radar:'),
-    );
+    const startupDeepLink = process.argv.find((argument) => argument.startsWith('vatsim-radar:'));
     if (startupDeepLink) handleDeeplinkAuth(startupDeepLink);
 }
 
@@ -218,18 +200,11 @@ const createWindow = async () => {
     addAppRequestHeaders(win);
     startWebSocketServer(win);
 
-    win.webContents.session.webRequest.onCompleted(
-        { urls: [`${domain}/api*`] },
-        (details) => {
-            if (
-                details.resourceType !== 'mainFrame' ||
-                details.statusCode < 500
-            )
-                return;
+    win.webContents.session.webRequest.onCompleted({ urls: [`${domain}/api*`] }, (details) => {
+        if (details.resourceType !== 'mainFrame' || details.statusCode < 500) return;
 
-            void resetAppWindow(win);
-        },
-    );
+        void resetAppWindow(win);
+    });
 
     win.on('close', (event) => {
         if (store.get('tray') === true && !isQuitting) {
@@ -307,9 +282,7 @@ const createWindow = async () => {
         const isSystemReload =
             input.type === 'keyDown' &&
             ((input.key === 'F5' && (input.control || input.meta)) ||
-                ((input.control || input.meta) &&
-                    input.shift &&
-                    input.key.toLowerCase() === 'r'));
+                ((input.control || input.meta) && input.shift && input.key.toLowerCase() === 'r'));
 
         if (!isSystemReload) return;
 

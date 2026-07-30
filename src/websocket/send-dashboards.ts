@@ -1,5 +1,5 @@
-import { Dashboard, DashboardsMessage } from "./messages";
-import { getConnectedClients } from "./server";
+import { Dashboard, DashboardsMessage } from './messages';
+import { getConnectedClients } from './server';
 
 /**
  * Sends a list of dashboards to all connected websocket clients.
@@ -7,7 +7,7 @@ import { getConnectedClients } from "./server";
  */
 export function sendDashboards(dashboards: Dashboard[]) {
   const message = {
-    type: "dashboards",
+    type: 'dashboards',
     data: {
       dashboards,
     },

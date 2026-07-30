@@ -1,6 +1,6 @@
-import { WebSocketServer, WebSocket } from "ws";
-import { isForwardableMessage, WebsocketMessage } from "./messages";
-import { BrowserWindow } from "electron";
+import { WebSocketServer, WebSocket } from 'ws';
+import { isForwardableMessage, WebsocketMessage } from './messages';
+import { BrowserWindow } from 'electron';
 
 const WS_PORT = 48073;
 
@@ -14,7 +14,7 @@ let wss: WebSocketServer | undefined;
  */
 export function getWindow(): BrowserWindow {
   if (!window) {
-    throw new Error("WebSocket server window is not initialized");
+    throw new Error('WebSocket server window is not initialized');
   }
 
   return window;
@@ -29,10 +29,10 @@ export function startWebSocketServer(mainWindow: BrowserWindow) {
 
   wss = new WebSocketServer({ port: WS_PORT });
 
-  wss.on("connection", function connection(ws) {
-    ws.on("error", console.error);
+  wss.on('connection', function connection(ws) {
+    ws.on('error', console.error);
 
-    ws.on("message", (data) => {
+    ws.on('message', (data) => {
       const message = JSON.parse(data.toString()) as WebsocketMessage;
       processMessage(message);
     });
@@ -75,5 +75,5 @@ function processMessage(message: WebsocketMessage) {
     return;
   }
 
-  console.log("Received unknown message: ", message);
+  console.log('Received unknown message: ', message);
 }

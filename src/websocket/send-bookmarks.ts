@@ -1,5 +1,5 @@
-import { Bookmark, BookmarksMessage } from "./messages";
-import { getConnectedClients } from "./server";
+import { Bookmark, BookmarksMessage } from './messages';
+import { getConnectedClients } from './server';
 
 /**
  * Sends a list of bookmarks to all connected websocket clients.
@@ -7,7 +7,7 @@ import { getConnectedClients } from "./server";
  */
 export function sendBookmarks(bookmarks: Bookmark[]) {
   const message = {
-    type: "bookmarks",
+    type: 'bookmarks',
     data: {
       bookmarks,
     },

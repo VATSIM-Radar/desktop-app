@@ -10,36 +10,36 @@ export interface Dashboard {
 }
 
 export interface GetBookmarksMessage {
-  type: "get-bookmarks";
+  type: 'get-bookmarks';
 }
 
 export interface GetDashboardsMessage {
-  type: "get-dashboards";
+  type: 'get-dashboards';
 }
 
 export interface ActivateBookmarkMessage {
-  type: "activate-bookmark";
+  type: 'activate-bookmark';
   data: {
     id: number;
   };
 }
 
 export interface ActivateDashboardMessage {
-  type: "activate-dashboard";
+  type: 'activate-dashboard';
   data: {
     id: number;
   };
 }
 
 export interface BookmarksMessage {
-  type: "bookmarks";
+  type: 'bookmarks';
   data: {
     bookmarks: Bookmark[];
   };
 }
 
 export interface DashboardsMessage {
-  type: "dashboards";
+  type: 'dashboards';
   data: {
     dashboards: Dashboard[];
   };
@@ -55,11 +55,11 @@ export type WebsocketMessage =
 
 // These message types are the messages that get forwarded directly
 // to the renderer for processing.
-const forwardableMessageTypes = new Set<WebsocketMessage["type"]>([
-  "get-bookmarks",
-  "activate-bookmark",
-  "get-dashboards",
-  "activate-dashboard",
+const forwardableMessageTypes = new Set<WebsocketMessage['type']>([
+  'get-bookmarks',
+  'activate-bookmark',
+  'get-dashboards',
+  'activate-dashboard',
 ]);
 
 /**

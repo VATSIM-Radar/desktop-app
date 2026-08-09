@@ -3,7 +3,7 @@
   "version": "0.0.24",
   "license": "CC BY-NC 4.0",
   "main": ".vite/build/app.js",
-  "packageManager": "yarn@4.17.1",
+  "packageManager": "yarn@4.18.0",
   "scripts": {
     "lint": "eslint .",
     "start": "electron-forge start",
@@ -15,7 +15,7 @@
     "@xhayper/discord-rpc": "1.3.4",
     "express": "5.2.1",
     "rou3": "0.9.1",
-    "srvx": "0.12.4",
+    "srvx": "0.12.5",
     "update-electron-app": "3.3.0"
   },
   "devDependencies": {
@@ -29,18 +29,18 @@
     "@eslint/js": "10.0.1",
     "@stylistic/eslint-plugin": "5.10.0",
     "@types/electron-squirrel-startup": "1.0.2",
-    "@typescript-eslint/parser": "8.65.0",
-    "electron": "43.2.0",
+    "@typescript-eslint/parser": "8.66.0",
+    "electron": "43.3.0",
     "electron-squirrel-startup": "1.0.1",
     "electron-store": "11.0.2",
-    "eslint": "10.7.0",
+    "eslint": "10.8.1",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-unused-imports": "4.4.1",
     "typescript": "7.0.2",
-    "typescript-eslint": "8.65.0",
-    "vite": "8.1.5"
+    "typescript-eslint": "8.66.0",
+    "vite": "8.2.1"
   },
   "resolutions": {
-    "extract-zip": "npm:@electron-internal/extract-zip@1.0.4"
+    "extract-zip": "npm:@electron-internal/extract-zip@1.0.5"
   }
 }

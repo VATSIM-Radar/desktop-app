@@ -37,7 +37,7 @@ export function startWebSocketServer(mainWindow: BrowserWindow) {
                 const message = JSON.parse(data.toString()) as WebsocketMessage;
                 processMessage(message);
             } catch (error) {
-                console.error('Error processing websocket message: ', error);
+                console.error('Error processing websocket message: ', error.message);
             }
         });
     });

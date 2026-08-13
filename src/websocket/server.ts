@@ -27,14 +27,18 @@ export function getWindow(): BrowserWindow {
 export function startWebSocketServer(mainWindow: BrowserWindow) {
     window = mainWindow;
 
-    wss = new WebSocketServer({ port: WS_PORT });
+    wss = new WebSocketServer({ port: WS_PORT, host: '127.0.0.1' });
 
     wss.on('connection', function connection(ws) {
         ws.on('error', console.error);
 
         ws.on('message', (data) => {
-            const message = JSON.parse(data.toString()) as WebsocketMessage;
-            processMessage(message);
+            try {
+                const message = JSON.parse(data.toString()) as WebsocketMessage;
+                processMessage(message);
+            } catch (error) {
+                console.error('Error processing websocket message: ', error);
+            }
         });
     });
 

@@ -10,6 +10,9 @@ import { logAutoUpdate } from './utils/auto-updater-log';
 import { startServer } from './utils/server';
 import { isApiUrl, loadAppUrl, resetAppWindow } from './utils/navigation';
 import { initApplicationMenu } from './utils/application-menu';
+import { startWebSocketServer, stopWebSocketServer } from './websocket/server';
+import { sendBookmarks } from './websocket/send-bookmarks';
+import { sendDashboards } from './websocket/send-dashboards';
 
 // @ts-expect-error Non-esm
 if (Squirell.default) {
@@ -18,7 +21,9 @@ if (Squirell.default) {
 
 const domain = process.env.VITE_DOMAIN!;
 const isNextRelease = domain.includes('next.');
-const updateBaseUrl = process.env.VITE_UPDATE_BASE_URL ?? `https://r2.vatsim-radar.com/app/${ isNextRelease ? 'next' : 'prod' }`;
+const updateBaseUrl =
+    process.env.VITE_UPDATE_BASE_URL ??
+    `https://r2.vatsim-radar.com/app/${isNextRelease ? 'next' : 'prod'}`;
 const appDisplayName = isNextRelease ? 'VATSIM Radar Next' : 'VATSIM Radar';
 const appUserModelId = 'com.squirrel.vatsim_radar_desktop.vatsim-radar';
 const getAssetPath = (...parts: string[]) => {
@@ -34,7 +39,9 @@ const getWebPreferences = () => ({
     preload: path.join(__dirname, 'preload.js'),
 });
 
-const icon = nativeImage.createFromPath(getAssetPath(process.platform === 'win32' ? 'favicon.ico' : 'icon.png'));
+const icon = nativeImage.createFromPath(
+    getAssetPath(process.platform === 'win32' ? 'favicon.ico' : 'icon.png'),
+);
 let mainWindow: BrowserWindow | undefined;
 let pendingAuthUrl: string | undefined;
 let currentAuthUrl: string | undefined;
@@ -48,7 +55,7 @@ if (process.platform === 'win32') {
 }
 
 const initAutoUpdates = () => {
-    const updateFeedBaseUrl = `${ updateBaseUrl }/${ process.platform }/${ process.arch }`;
+    const updateFeedBaseUrl = `${updateBaseUrl}/${process.platform}/${process.arch}`;
 
     logAutoUpdate(app, 'info', 'init', {
         appVersion: app.getVersion(),
@@ -58,18 +65,23 @@ const initAutoUpdates = () => {
         updateFeedBaseUrl,
     });
 
-    autoUpdater.on('error', error => logAutoUpdate(app, 'error', 'error', error));
+    autoUpdater.on('error', (error) => logAutoUpdate(app, 'error', 'error', error));
     autoUpdater.on('checking-for-update', () => logAutoUpdate(app, 'info', 'checking-for-update'));
     autoUpdater.on('update-available', () => logAutoUpdate(app, 'info', 'update-available'));
-    autoUpdater.on('update-not-available', () => logAutoUpdate(app, 'info', 'update-not-available'));
-    autoUpdater.on('update-downloaded', (_event, releaseNotes, releaseName, releaseDate, updateUrl) => {
-        logAutoUpdate(app, 'info', 'update-downloaded', {
-            releaseNotes,
-            releaseName,
-            releaseDate,
-            updateUrl,
-        });
-    });
+    autoUpdater.on('update-not-available', () =>
+        logAutoUpdate(app, 'info', 'update-not-available'),
+    );
+    autoUpdater.on(
+        'update-downloaded',
+        (_event, releaseNotes, releaseName, releaseDate, updateUrl) => {
+            logAutoUpdate(app, 'info', 'update-downloaded', {
+                releaseNotes,
+                releaseName,
+                releaseDate,
+                updateUrl,
+            });
+        },
+    );
 
     updateElectronApp({
         updateSource: {
@@ -77,8 +89,8 @@ const initAutoUpdates = () => {
             baseUrl: updateFeedBaseUrl,
         },
         onNotifyUser: makeUserNotifier({
-            title: `${ appDisplayName } Update`,
-            detail: `A new version of ${ appDisplayName } has been downloaded. Restart the app to apply it.`,
+            title: `${appDisplayName} Update`,
+            detail: `A new version of ${appDisplayName} has been downloaded. Restart the app to apply it.`,
             restartButtonText: 'Restart',
             laterButtonText: 'Later',
         }),
@@ -103,7 +115,7 @@ const notifyVisibilityChange = (win: BrowserWindow) => {
 
 const addAppRequestHeaders = (win: BrowserWindow) => {
     win.webContents.session.webRequest.onBeforeSendHeaders(
-        { urls: [`${ domain }/*`] },
+        { urls: [`${domain}/*`] },
         (details, callback) => {
             details.requestHeaders.radarWebview = app.getVersion();
             callback({ requestHeaders: details.requestHeaders });
@@ -135,10 +147,11 @@ const handleDeeplinkAuth = (deepLink: string) => {
 
 if (process.defaultApp) {
     if (process.argv.length >= 2) {
-        app.setAsDefaultProtocolClient('vatsim-radar', process.execPath, [path.resolve(process.argv[1])]);
+        app.setAsDefaultProtocolClient('vatsim-radar', process.execPath, [
+            path.resolve(process.argv[1]),
+        ]);
     }
-}
-else {
+} else {
     app.setAsDefaultProtocolClient('vatsim-radar');
 }
 
@@ -149,7 +162,7 @@ if (!hasSingleInstanceLock) {
 
 if (hasSingleInstanceLock) {
     app.on('second-instance', (_event, commandLine) => {
-        const deepLink = commandLine.find(argument => argument.startsWith('vatsim-radar:'));
+        const deepLink = commandLine.find((argument) => argument.startsWith('vatsim-radar:'));
         if (deepLink) handleDeeplinkAuth(deepLink);
 
         const win = BrowserWindow.getAllWindows()[0];
@@ -161,7 +174,7 @@ if (hasSingleInstanceLock) {
         handleDeeplinkAuth(url);
     });
 
-    const startupDeepLink = process.argv.find(argument => argument.startsWith('vatsim-radar:'));
+    const startupDeepLink = process.argv.find((argument) => argument.startsWith('vatsim-radar:'));
     if (startupDeepLink) handleDeeplinkAuth(startupDeepLink);
 }
 
@@ -184,20 +197,15 @@ const createWindow = async () => {
 
     mainWindow = win;
     addAppRequestHeaders(win);
+    startWebSocketServer(win);
 
-    win.webContents.session.webRequest.onCompleted(
-        { urls: [`${ domain }/api*`] },
-        details => {
-            if (
-                details.resourceType !== 'mainFrame' ||
-                details.statusCode < 500
-            ) return;
+    win.webContents.session.webRequest.onCompleted({ urls: [`${domain}/api*`] }, (details) => {
+        if (details.resourceType !== 'mainFrame' || details.statusCode < 500) return;
 
-            void resetAppWindow(win);
-        },
-    );
+        void resetAppWindow(win);
+    });
 
-    win.on('close', event => {
+    win.on('close', (event) => {
         if (store.get('tray') === true && !isQuitting) {
             event.preventDefault();
             win.hide();
@@ -234,7 +242,7 @@ const createWindow = async () => {
         };
     });
 
-    win.webContents.on('will-navigate', (event => {
+    win.webContents.on('will-navigate', (event) => {
         if (event.url.startsWith('file://')) return;
 
         if (event.url.includes('/redirect')) {
@@ -249,7 +257,7 @@ const createWindow = async () => {
             event.preventDefault();
             return;
         }
-    }));
+    });
 
     const storeLastUrl = (url: string) => {
         if (url.startsWith(domain) && !isApiUrl(url)) store.set('lastUrl', url);
@@ -266,10 +274,10 @@ const createWindow = async () => {
     });
 
     win.webContents.on('before-input-event', (event, input) => {
-        const isSystemReload = input.type === 'keyDown' && (
-            (input.key === 'F5' && (input.control || input.meta)) ||
-            ((input.control || input.meta) && input.shift && input.key.toLowerCase() === 'r')
-        );
+        const isSystemReload =
+            input.type === 'keyDown' &&
+            ((input.key === 'F5' && (input.control || input.meta)) ||
+                ((input.control || input.meta) && input.shift && input.key.toLowerCase() === 'r'));
 
         if (!isSystemReload) return;
 
@@ -289,8 +297,7 @@ const createWindow = async () => {
 
     try {
         await loadAppUrl(win, initialUrl);
-    }
-    catch {
+    } catch {
         await win.loadFile(getAssetPath('offline.html'));
     }
     notifyVisibilityChange(win);
@@ -340,11 +347,12 @@ if (hasSingleInstanceLock) {
         app.on('window-all-closed', onWindowAllClosed);
     }
 
-    app.on('activate', function() {
+    app.on('activate', function () {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
 
     app.on('before-quit', () => {
+        stopWebSocketServer();
         isQuitting = true;
     });
 }
@@ -359,12 +367,27 @@ store.onDidChange('tray', () => {
 
 ipcMain.on('reload', () => {
     store.delete('lastUrl');
-    BrowserWindow.getAllWindows().forEach(x => x.destroy());
+    BrowserWindow.getAllWindows().forEach((x) => x.destroy());
+    stopWebSocketServer();
     createWindow();
 });
 
 ipcMain.on('tray:set', (_event, value: boolean) => {
     store.set('tray', value);
+});
+
+// The bookmarks message comes from the renderer in response to a
+// get-bookmarks request. Pass the received bookmarks to connected
+// websocket clients.
+ipcMain.on('bookmarks', (_event, message) => {
+    sendBookmarks(message.data.bookmarks);
+});
+
+// The dashboards message comes from the renderer in response to a
+// get-dashboards request. Pass the received dashboards to connected
+// websocket clients.
+ipcMain.on('dashboards', (_event, message) => {
+    sendDashboards(message.data.dashboards);
 });
 
 ipcMain.handle('tray:get', (): boolean => store.get('tray') === true);

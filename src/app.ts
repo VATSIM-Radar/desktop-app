@@ -12,7 +12,6 @@ import { isApiUrl, loadAppUrl, resetAppWindow } from './utils/navigation';
 import { initApplicationMenu } from './utils/application-menu';
 import { startWebSocketServer, stopWebSocketServer } from './websocket/server';
 import { sendBookmarks } from './websocket/send-bookmarks';
-import { BookmarksMessage } from './websocket/messages';
 import { sendDashboards } from './websocket/send-dashboards';
 
 // @ts-expect-error Non-esm
@@ -369,6 +368,7 @@ store.onDidChange('tray', () => {
 ipcMain.on('reload', () => {
     store.delete('lastUrl');
     BrowserWindow.getAllWindows().forEach((x) => x.destroy());
+    stopWebSocketServer();
     createWindow();
 });
 

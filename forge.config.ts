@@ -97,6 +97,7 @@ const config: ForgeConfig = {
                 bin: 'vatsim-radar',
                 icon: join('src', 'assets', 'icon.png'),
                 categories: ['Network'],
+                mimeType: ['x-scheme-handler/vatsim-radar'],
             },
         }),
     ],

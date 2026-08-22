@@ -33,7 +33,7 @@
     "electron": "43.4.1",
     "electron-squirrel-startup": "1.0.1",
     "electron-store": "11.0.2",
-    "eslint": "10.8.1",
+    "eslint": "10.9.0",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-unused-imports": "4.4.1",
     "typescript": "7.0.2",

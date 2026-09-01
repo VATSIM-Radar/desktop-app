@@ -11,6 +11,9 @@ const getAssetPath = (app: App, ...parts: string[]) => {
 };
 
 export function addTray(app: App, createWindow: () => any) {
+    if (process.platform === 'darwin') {
+      return;
+    }
     const iconPath = getAssetPath(app, process.platform === 'win32' ? 'favicon.ico' : 'tray-icon.png');
     const icon = nativeImage.createFromPath(iconPath);
     if (icon.isEmpty()) {

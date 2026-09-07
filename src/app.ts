@@ -1,18 +1,17 @@
 import * as Squirell from 'electron-squirrel-startup';
-import { app, shell, BrowserWindow, ipcMain, autoUpdater } from 'electron';
+import { app, ipcMain, autoUpdater } from 'electron';
 import { makeUserNotifier, updateElectronApp, UpdateSourceType } from 'update-electron-app';
 import { addTray } from './utils/tray';
 import { nativeImage } from 'electron/common';
 import { store } from './utils/store';
 import * as path from 'node:path';
-import { getNavigraphAuthUrl, getVatsimAuthUrl } from './utils/auth';
 import { logAutoUpdate } from './utils/auto-updater-log';
 import { startServer } from './utils/server';
-import { isApiUrl, loadAppUrl, resetAppWindow } from './utils/navigation';
 import { initApplicationMenu } from './utils/application-menu';
-import { startWebSocketServer, stopWebSocketServer } from './websocket/server';
+import { stopWebSocketServer } from './websocket/server';
 import { sendBookmarks } from './websocket/send-bookmarks';
 import { sendDashboards } from './websocket/send-dashboards';
+import { createMainWindowManager } from './utils/main-window';
 
 // @ts-expect-error Non-esm
 if (Squirell.default) {
@@ -31,22 +30,15 @@ const getAssetPath = (...parts: string[]) => {
         ? path.join(process.resourcesPath, 'assets', ...parts)
         : path.join(app.getAppPath(), 'src', 'assets', ...parts);
 };
-const getWebPreferences = () => ({
-    devTools: true,
-    nodeIntegration: false,
-    contextIsolation: true,
-    partition: 'persist:main',
-    preload: path.join(__dirname, 'preload.js'),
-});
-
 const icon = nativeImage.createFromPath(
     getAssetPath(process.platform === 'win32' ? 'favicon.ico' : 'icon.png'),
 );
-let mainWindow: BrowserWindow | undefined;
-let pendingAuthUrl: string | undefined;
-let currentAuthUrl: string | undefined;
-let isQuitting = false;
-let isMainWindowVisible: boolean | undefined;
+const mainWindowManager = createMainWindowManager({
+    domain,
+    title: appDisplayName,
+    icon,
+    offlinePagePath: getAssetPath('offline.html'),
+});
 
 app.setName(appDisplayName);
 
@@ -103,48 +95,6 @@ const initAutoUpdates = () => {
     });
 };
 
-const notifyVisibilityChange = (win: BrowserWindow) => {
-    if (win.isDestroyed()) return;
-
-    const isVisible = win.isVisible() && !win.isMinimized();
-    if (isMainWindowVisible === isVisible) return;
-
-    isMainWindowVisible = isVisible;
-    win.webContents.send('efbX', isVisible ? 'resume' : 'pause');
-};
-
-const addAppRequestHeaders = (win: BrowserWindow) => {
-    win.webContents.session.webRequest.onBeforeSendHeaders(
-        { urls: [`${domain}/*`] },
-        (details, callback) => {
-            details.requestHeaders.radarWebview = app.getVersion();
-            callback({ requestHeaders: details.requestHeaders });
-        },
-    );
-};
-
-const showWindow = (win: BrowserWindow) => {
-    if (win.isDestroyed()) return;
-    if (win.isMinimized()) win.restore();
-    win.show();
-    win.focus();
-};
-
-const handleDeeplinkAuth = (deepLink: string) => {
-    const authUrl = getVatsimAuthUrl(deepLink) ?? getNavigraphAuthUrl(deepLink);
-    if (!authUrl || authUrl === currentAuthUrl) return;
-
-    currentAuthUrl = authUrl;
-
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        loadAppUrl(mainWindow, authUrl);
-        showWindow(mainWindow);
-        return;
-    }
-
-    pendingAuthUrl = authUrl;
-};
-
 if (process.defaultApp) {
     if (process.argv.length >= 2) {
         app.setAsDefaultProtocolClient('vatsim-radar', process.execPath, [
@@ -163,172 +113,19 @@ if (!hasSingleInstanceLock) {
 if (hasSingleInstanceLock) {
     app.on('second-instance', (_event, commandLine) => {
         const deepLink = commandLine.find((argument) => argument.startsWith('vatsim-radar:'));
-        if (deepLink) handleDeeplinkAuth(deepLink);
+        if (deepLink) mainWindowManager.handleDeepLink(deepLink);
 
-        const win = BrowserWindow.getAllWindows()[0];
-        if (win) showWindow(win);
+        void mainWindowManager.open();
     });
 
     app.on('open-url', (event, url) => {
         event.preventDefault();
-        handleDeeplinkAuth(url);
+        mainWindowManager.handleDeepLink(url);
     });
 
     const startupDeepLink = process.argv.find((argument) => argument.startsWith('vatsim-radar:'));
-    if (startupDeepLink) handleDeeplinkAuth(startupDeepLink);
+    if (startupDeepLink) mainWindowManager.handleDeepLink(startupDeepLink);
 }
-
-const createWindow = async () => {
-    const win = new BrowserWindow({
-        show: false,
-        title: appDisplayName,
-        accentColor: '#1A1A1A',
-        backgroundColor: '#1A1A1A',
-        autoHideMenuBar: true,
-        fullscreenable: true,
-        tabbingIdentifier: 'vatsim-radar',
-        webPreferences: getWebPreferences(),
-        width: store.get('width') || 640,
-        height: store.get('height') || 360,
-        x: store.get('x'),
-        y: store.get('y'),
-        icon,
-    });
-
-    mainWindow = win;
-    addAppRequestHeaders(win);
-    startWebSocketServer(win);
-
-    win.webContents.session.webRequest.onCompleted({ urls: [`${domain}/api*`] }, (details) => {
-        if (details.resourceType !== 'mainFrame' || details.statusCode < 500) return;
-
-        void resetAppWindow(win);
-    });
-
-    win.on('close', (event) => {
-        if (store.get('tray') === true && !isQuitting) {
-            event.preventDefault();
-            win.hide();
-        }
-    });
-
-    win.on('closed', () => {
-        if (mainWindow === win) mainWindow = undefined;
-        isMainWindowVisible = undefined;
-    });
-
-    if (!store.get('width') || store.get('maximized')) {
-        win.maximize();
-    }
-    win.show();
-
-    win.webContents.setWindowOpenHandler(({ url }) => {
-        if (!url.startsWith(domain)) {
-            shell.openExternal(url);
-            return { action: 'deny' };
-        }
-
-        return {
-            action: 'allow',
-            overrideBrowserWindowOptions: {
-                title: appDisplayName,
-                autoHideMenuBar: true,
-                fullscreenable: true,
-                tabbingIdentifier: 'vatsim-radar',
-                backgroundColor: '#1A1A1A',
-                icon,
-                webPreferences: getWebPreferences(),
-            },
-        };
-    });
-
-    win.webContents.on('will-navigate', (event) => {
-        if (event.url.startsWith('file://')) return;
-
-        if (event.url.includes('/redirect')) {
-            const url = new URL(event.url);
-            url.searchParams.set('app', '1');
-            shell.openExternal(url.toString());
-            event.preventDefault();
-        }
-
-        if (!event.url.startsWith(domain)) {
-            shell.openExternal(event.url);
-            event.preventDefault();
-            return;
-        }
-    });
-
-    const storeLastUrl = (url: string) => {
-        if (url.startsWith(domain) && !isApiUrl(url)) store.set('lastUrl', url);
-    };
-
-    win.webContents.on('did-navigate', (_event, url) => {
-        storeLastUrl(url);
-    });
-
-    win.webContents.on('did-navigate-in-page', (_event, url, isMainFrame) => {
-        if (!isMainFrame) return;
-
-        storeLastUrl(url);
-    });
-
-    win.webContents.on('before-input-event', (event, input) => {
-        const isSystemReload =
-            input.type === 'keyDown' &&
-            ((input.key === 'F5' && (input.control || input.meta)) ||
-                ((input.control || input.meta) && input.shift && input.key.toLowerCase() === 'r'));
-
-        if (!isSystemReload) return;
-
-        event.preventDefault();
-        void resetAppWindow(win);
-    });
-
-    const lastUrl = store.get('lastUrl');
-    let initialUrl = pendingAuthUrl ?? store.get('lastUrl') ?? domain;
-
-    if (lastUrl && (!lastUrl.startsWith(domain) || isApiUrl(lastUrl))) {
-        store.delete('lastUrl');
-        if (!pendingAuthUrl) initialUrl = domain;
-    }
-
-    pendingAuthUrl = undefined;
-
-    try {
-        await loadAppUrl(win, initialUrl);
-    } catch {
-        await win.loadFile(getAssetPath('offline.html'));
-    }
-    notifyVisibilityChange(win);
-
-    let storeWindowStateTimeout: NodeJS.Timeout | undefined;
-
-    function storeWindowState() {
-        if (win.isDestroyed() || win.isMinimized()) return;
-
-        const { width, height, x, y } = win.getBounds();
-        store.set({ width, height, x, y, maximized: win.isMaximized() });
-    }
-
-    function scheduleStoreWindowState() {
-        if (storeWindowStateTimeout) clearTimeout(storeWindowStateTimeout);
-        storeWindowStateTimeout = setTimeout(storeWindowState, 250);
-    }
-
-    win.on('resize', scheduleStoreWindowState);
-    win.on('resized', storeWindowState);
-    win.on('move', scheduleStoreWindowState);
-    win.on('moved', storeWindowState);
-    win.on('maximize', storeWindowState);
-    win.on('unmaximize', storeWindowState);
-
-    win.on('show', () => notifyVisibilityChange(win));
-    win.on('hide', () => notifyVisibilityChange(win));
-    win.on('minimize', () => notifyVisibilityChange(win));
-    win.on('restore', () => notifyVisibilityChange(win));
-    win.webContents.on('did-finish-load', () => notifyVisibilityChange(win));
-};
 
 const onWindowAllClosed = () => {
     // having this listener active will prevent the app from quitting.
@@ -337,10 +134,10 @@ const onWindowAllClosed = () => {
 if (hasSingleInstanceLock) {
     app.whenReady().then(() => {
         initApplicationMenu();
-        createWindow();
+        void mainWindowManager.create();
         initAutoUpdates();
 
-        addTray(app, createWindow);
+        addTray(app, mainWindowManager.open);
     });
 
     if (store.get('tray') === true) {
@@ -348,12 +145,12 @@ if (hasSingleInstanceLock) {
     }
 
     app.on('activate', function () {
-        if (BrowserWindow.getAllWindows().length === 0) createWindow();
+        void mainWindowManager.open();
     });
 
     app.on('before-quit', () => {
         stopWebSocketServer();
-        isQuitting = true;
+        mainWindowManager.prepareToQuit();
     });
 }
 
@@ -366,10 +163,7 @@ store.onDidChange('tray', () => {
 });
 
 ipcMain.on('reload', () => {
-    store.delete('lastUrl');
-    BrowserWindow.getAllWindows().forEach((x) => x.destroy());
-    stopWebSocketServer();
-    createWindow();
+    void mainWindowManager.reload();
 });
 
 ipcMain.on('tray:set', (_event, value: boolean) => {

@@ -1,6 +1,6 @@
 import { addRoute, createRouter, findRoute } from 'rou3';
 import { serve } from 'srvx';
-import { Client } from '@xhayper/discord-rpc';
+import type { Client } from '@xhayper/discord-rpc';
 import type { SetActivity } from '@xhayper/discord-rpc/dist/structures/ClientUser';
 
 const router = createRouter<{ type: string }>();
@@ -22,23 +22,43 @@ function handleError(message: string, statusCode = 404) {
 }
 
 let client: Client | undefined;
+let clientPromise: Promise<Client> | undefined;
 let status = false;
+
+async function getDiscordClient(): Promise<Client> {
+    if (client) return client;
+
+    if (!clientPromise) {
+        clientPromise = import('@xhayper/discord-rpc')
+            .then(({ Client: DiscordClient }) => {
+                const nextClient = new DiscordClient({
+                    clientId: '1229876151602905220',
+                });
+
+                nextClient.on('ready', () => {
+                    status = true;
+                });
+                nextClient.on('disconnected', () => {
+                    status = false;
+                });
+
+                client = nextClient;
+                return nextClient;
+            })
+            .finally(() => {
+                clientPromise = undefined;
+            });
+    }
+
+    return clientPromise;
+}
 
 export async function initDiscord() {
     if (client && status) return true;
 
     try {
-        if (!client) {
-            client = new Client({
-                clientId: '1229876151602905220',
-            });
-
-            client.on('ready', async () => {
-                status = true;
-            });
-        }
-
-        await client.login();
+        const discordClient = await getDiscordClient();
+        await discordClient.login();
 
         return true;
     }

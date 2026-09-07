@@ -1,10 +1,11 @@
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocketServer } from 'ws';
+import type { WebSocket } from 'ws';
 import { isForwardableMessage, WebsocketMessage } from './messages';
-import { BrowserWindow } from 'electron';
+import type { BrowserWindow } from 'electron';
 
 const WS_PORT = 48073;
 
-let window: BrowserWindow | undefined;
+let rendererWindow: BrowserWindow | undefined;
 let wss: WebSocketServer | undefined;
 
 /**
@@ -13,21 +14,32 @@ let wss: WebSocketServer | undefined;
  * @returns The window that handles IPC with the renderer.
  */
 export function getWindow(): BrowserWindow {
-    if (!window) {
+    if (!rendererWindow || rendererWindow.isDestroyed()) {
         throw new Error('WebSocket server window is not initialized');
     }
 
-    return window;
+    return rendererWindow;
 }
 
 /**
- * Starts the websocket server to handle messages from clients.
+ * Attaches a renderer window and starts the websocket server if needed.
+ * Subsequent calls only replace the renderer window, keeping existing clients.
  * @param mainWindow The window which handles IPC messages with the renderer.
  */
 export function startWebSocketServer(mainWindow: BrowserWindow) {
-    window = mainWindow;
+    rendererWindow = mainWindow;
+
+    mainWindow.once('closed', () => {
+        if (rendererWindow === mainWindow) rendererWindow = undefined;
+    });
+
+    if (wss) return;
 
     wss = new WebSocketServer({ port: WS_PORT, host: '127.0.0.1' });
+
+    wss.on('error', (error) => {
+        console.error('WebSocket server error: ', error);
+    });
 
     wss.on('connection', function connection(ws) {
         ws.on('error', console.error);
@@ -49,10 +61,16 @@ export function startWebSocketServer(mainWindow: BrowserWindow) {
  * Closes the websocket server.
  */
 export function stopWebSocketServer() {
-    if (wss) {
-        wss.close();
-        wss = undefined;
-    }
+    rendererWindow = undefined;
+
+    const server = wss;
+    wss = undefined;
+    if (!server) return;
+
+    server.clients.forEach((client) => client.terminate());
+    server.close((error) => {
+        if (error) console.error('Error closing WebSocket server: ', error);
+    });
 }
 
 /**

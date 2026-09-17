@@ -3318,9 +3318,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:44.3.0":
-  version: 44.3.0
-  resolution: "electron@npm:44.3.0"
+"electron@npm:44.4.1":
+  version: 44.4.1
+  resolution: "electron@npm:44.4.1"
   dependencies:
     "@electron-internal/extract-zip": "npm:^1.0.1"
     "@electron/get": "npm:^5.0.0"
@@ -3328,7 +3328,7 @@ __metadata:
   bin:
     electron: cli.js
     install-electron: install.js
-  checksum: 10c0/de84b047e0227802628107a4b23be2a53df8b3a50ba9db139684ef2be2246f4dfb4c7a672a6e910581906761648b03cb47718f8c8f7bf6cb87ce4324c821617a
+  checksum: 10c0/18a9c7de72d4e072827de21979f267582cd8ff73713c65f76458ac1830cf28e23a5fca48070595ee8161cc258995364b8c5a8d319f1133300a9b6f7c7acac805
   languageName: node
   linkType: hard
 
@@ -7314,12 +7314,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"srvx@npm:1.0.4":
-  version: 1.0.4
-  resolution: "srvx@npm:1.0.4"
+"srvx@npm:1.0.5":
+  version: 1.0.5
+  resolution: "srvx@npm:1.0.5"
   bin:
     srvx: ./bin/srvx.mjs
-  checksum: 10c0/2d404762dcb3ba4ee7199b02ea7c15a52214261d4042c89bdacebfe60437f91f6f6ef13d733296bacf608bab3edff62a4f7e09aeb915632eb9489296c980f67b
+  checksum: 10c0/7ff87707840af95b399a11ab0b2fba6ded66a1d4658324913a1c95c916304056e5e618a9fc93803c1351aaf6acf4f7f3c5f55f18e82110a2ce876246d770c881
   languageName: node
   linkType: hard
 
@@ -8180,7 +8180,7 @@ __metadata:
     "@types/electron-squirrel-startup": "npm:1.0.2"
     "@typescript-eslint/parser": "npm:8.70.0"
     "@xhayper/discord-rpc": "npm:1.3.4"
-    electron: "npm:44.3.0"
+    electron: "npm:44.4.1"
     electron-squirrel-startup: "npm:1.0.1"
     electron-store: "npm:11.0.2"
     eslint: "npm:10.10.0"
@@ -8188,7 +8188,7 @@ __metadata:
     eslint-plugin-unused-imports: "npm:4.4.1"
     express: "npm:5.2.1"
     rou3: "npm:0.9.2"
-    srvx: "npm:1.0.4"
+    srvx: "npm:1.0.5"
     typescript: "npm:7.0.2"
     typescript-eslint: "npm:8.70.0"
     update-electron-app: "npm:3.3.0"

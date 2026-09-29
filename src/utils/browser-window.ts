@@ -1,6 +1,7 @@
 import { BrowserWindow, shell } from 'electron';
 import type { BrowserWindowConstructorOptions, NativeImage } from 'electron';
 import * as path from 'node:path';
+import { getExternalAuthUrl } from './auth';
 
 const domainOrigin = new URL(process.env.VITE_DOMAIN!).origin;
 const configuredWindows = new WeakSet<BrowserWindow>();
@@ -53,6 +54,12 @@ export const configureAppWindow = (win: BrowserWindow, config: AppWindowConfig) 
     configuredWindows.add(win);
 
     win.webContents.setWindowOpenHandler(({ url }) => {
+        const authUrl = getExternalAuthUrl(url);
+        if (authUrl) {
+            void shell.openExternal(authUrl);
+            return { action: 'deny' };
+        }
+
         if (!isAppUrl(url)) {
             void shell.openExternal(url);
             return { action: 'deny' };
@@ -68,13 +75,12 @@ export const configureAppWindow = (win: BrowserWindow, config: AppWindowConfig) 
         configureAppWindow(childWindow, config);
     });
 
-    win.webContents.on('will-navigate', (event) => {
+    const handleNavigation = (event: { url: string; preventDefault: () => void }) => {
         if (event.url.startsWith('file://')) return;
 
-        if (event.url.includes('/redirect')) {
-            const url = new URL(event.url);
-            url.searchParams.set('app', '1');
-            void shell.openExternal(url.toString());
+        const authUrl = getExternalAuthUrl(event.url);
+        if (authUrl) {
+            void shell.openExternal(authUrl);
             event.preventDefault();
             return;
         }
@@ -83,6 +89,11 @@ export const configureAppWindow = (win: BrowserWindow, config: AppWindowConfig) 
             void shell.openExternal(event.url);
             event.preventDefault();
         }
+    };
+
+    win.webContents.on('will-navigate', handleNavigation);
+    win.webContents.on('will-redirect', (event) => {
+        if (event.isMainFrame) handleNavigation(event);
     });
 
     win.on('show', () => notifyVisibilityChange(win));

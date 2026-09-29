@@ -1,3 +1,22 @@
+export const getExternalAuthUrl = (navigationUrl: string): string | undefined => {
+    try {
+        const url = new URL(navigationUrl);
+
+        if (url.origin !== new URL(process.env.VITE_DOMAIN!).origin ||
+            !['/api/auth/vatsim/redirect', '/api/auth/navigraph/redirect'].includes(url.pathname)) {
+            return;
+        }
+
+        url.searchParams.set('app', '1');
+        // Desktop callbacks must end in "-app", rather than "-app-iframe".
+        url.searchParams.delete('iframe');
+        return url.toString();
+    }
+    catch {
+        return;
+    }
+};
+
 export const getVatsimAuthUrl = (deepLink: string): string | undefined => {
     try {
         const url = new URL(deepLink);

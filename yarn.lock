@@ -1635,7 +1635,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ws@npm:^8.18.1":
+"@types/ws@npm:8.18.1":
   version: 8.18.1
   resolution: "@types/ws@npm:8.18.1"
   dependencies:
@@ -8178,7 +8178,7 @@ __metadata:
     "@eslint/js": "npm:10.0.1"
     "@stylistic/eslint-plugin": "npm:5.10.0"
     "@types/electron-squirrel-startup": "npm:1.0.2"
-    "@types/ws": "npm:^8.18.1"
+    "@types/ws": "npm:8.18.1"
     "@typescript-eslint/parser": "npm:8.70.1"
     "@xhayper/discord-rpc": "npm:1.5.1"
     electron: "npm:44.4.5"
@@ -8194,7 +8194,7 @@ __metadata:
     typescript-eslint: "npm:8.70.1"
     update-electron-app: "npm:3.3.0"
     vite: "npm:8.3.1"
-    ws: "npm:^8.22.0"
+    ws: "npm:8.22.0"
   languageName: unknown
   linkType: soft
 
@@ -8475,7 +8475,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^8.22.0":
+"ws@npm:8.22.0":
   version: 8.22.0
   resolution: "ws@npm:8.22.0"
   peerDependencies:

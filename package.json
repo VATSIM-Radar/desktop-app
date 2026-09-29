@@ -1,6 +1,6 @@
 {
   "name": "vatsim-radar-desktop",
-  "version": "0.0.31",
+  "version": "0.0.33",
   "license": "CC BY-NC 4.0",
   "main": ".vite/build/app.js",
   "packageManager": "yarn@4.18.1",
@@ -16,7 +16,8 @@
     "express": "5.2.1",
     "rou3": "0.9.2",
     "srvx": "1.0.5",
-    "update-electron-app": "3.3.0"
+    "update-electron-app": "3.3.0",
+    "ws": "^8.22.0"
   },
   "devDependencies": {
     "@electron-forge/cli": "7.11.2",
@@ -29,6 +30,7 @@
     "@eslint/js": "10.0.1",
     "@stylistic/eslint-plugin": "5.10.0",
     "@types/electron-squirrel-startup": "1.0.2",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/parser": "8.70.1",
     "electron": "44.4.5",
     "electron-squirrel-startup": "1.0.1",

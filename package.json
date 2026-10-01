@@ -3,7 +3,7 @@
   "version": "0.0.34",
   "license": "CC BY-NC 4.0",
   "engines": {
-    "node": ">=22.13.0"
+    "node": "v26.10.0"
   },
   "main": ".vite/build/app.cjs",
   "packageManager": "yarn@4.18.1",

@@ -17,7 +17,7 @@ const getWebPreferences = (): NonNullable<BrowserWindowConstructorOptions['webPr
     nodeIntegration: false,
     contextIsolation: true,
     partition: 'persist:main',
-    preload: path.join(__dirname, 'preload.js'),
+    preload: path.join(__dirname, 'preload.cjs'),
 });
 
 export const getAppWindowOptions = (config: AppWindowConfig): BrowserWindowConstructorOptions => ({

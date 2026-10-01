@@ -110,7 +110,7 @@ jobs:
       - name: Make and publish
         env:
           TARGET_ARCH: ${{ matrix.arch }}
-        run: yarn electron-forge publish --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
+        run: yarn electron-forge release --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
 
       - name: Collect release files
         run: |

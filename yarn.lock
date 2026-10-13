@@ -1544,7 +1544,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ajv@npm:^8.0.0, ajv@npm:^8.17.1":
+"ajv@npm:^8.0.0, ajv@npm:^8.20.0":
   version: 8.20.0
   resolution: "ajv@npm:8.20.0"
   dependencies:
@@ -1708,7 +1708,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"atomically@npm:^2.0.3":
+"atomically@npm:^2.1.1":
   version: 2.1.1
   resolution: "atomically@npm:2.1.1"
   dependencies:
@@ -1996,20 +1996,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"conf@npm:^15.0.2":
-  version: 15.1.0
-  resolution: "conf@npm:15.1.0"
+"conf@npm:^16.0.0":
+  version: 16.0.0
+  resolution: "conf@npm:16.0.0"
   dependencies:
-    ajv: "npm:^8.17.1"
+    ajv: "npm:^8.20.0"
     ajv-formats: "npm:^3.0.1"
-    atomically: "npm:^2.0.3"
+    atomically: "npm:^2.1.1"
     debounce-fn: "npm:^6.0.0"
-    dot-prop: "npm:^10.0.0"
-    env-paths: "npm:^3.0.0"
-    json-schema-typed: "npm:^8.0.1"
-    semver: "npm:^7.7.2"
+    dot-prop: "npm:^10.2.0"
+    env-paths: "npm:^4.0.0"
+    json-schema-typed: "npm:^8.0.2"
+    semver: "npm:^7.8.5"
     uint8array-extras: "npm:^1.5.0"
-  checksum: 10c0/ba3c74891f48232a7d32e473508c147a431a7bfdd266ebdeaf4e737227568345ea632a42d02e35f13740cb9a54076d79572d31591d6debae3b6bee089fa91c8a
+  checksum: 10c0/dde970b67634233c5136b49de42eb084c8e1e5d311f119955c2621fcf4d93e279d13a46acc4d605840ba9bc849e94a07f82c484e82c6aeaef645d1805435f23f
   languageName: node
   linkType: hard
 
@@ -2224,7 +2224,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dot-prop@npm:^10.0.0":
+"dot-prop@npm:^10.2.0":
   version: 10.2.0
   resolution: "dot-prop@npm:10.2.0"
   dependencies:
@@ -2325,13 +2325,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-store@npm:11.0.2":
-  version: 11.0.2
-  resolution: "electron-store@npm:11.0.2"
+"electron-store@npm:12.0.0":
+  version: 12.0.0
+  resolution: "electron-store@npm:12.0.0"
   dependencies:
-    conf: "npm:^15.0.2"
-    type-fest: "npm:^5.0.1"
-  checksum: 10c0/14a24b49f92b5fc818285a528a2032257dc3221fc3917ba94c0308f4c45bf468f92fb7ba401f1d7f0151bcf10487370448632e8a765dab47db20fc7b3f1925bb
+    conf: "npm:^16.0.0"
+    type-fest: "npm:^5.10.0"
+  checksum: 10c0/c43c8041e4f43e1b21576d737eb5ad51dfedf7035a9ca81a4daa02a9296a9107f267e3240a221ecb8285bc2442241faf245530eed4e01733fade70b396856f8a
   languageName: node
   linkType: hard
 
@@ -2408,6 +2408,15 @@ __metadata:
   version: 3.0.0
   resolution: "env-paths@npm:3.0.0"
   checksum: 10c0/76dec878cee47f841103bacd7fae03283af16f0702dad65102ef0a556f310b98a377885e0f32943831eb08b5ab37842a323d02529f3dfd5d0a40ca71b01b435f
+  languageName: node
+  linkType: hard
+
+"env-paths@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "env-paths@npm:4.0.0"
+  dependencies:
+    is-safe-filename: "npm:^0.1.0"
+  checksum: 10c0/13ee7fa4047786ca28f1fbf2239606f8a53304bdf71bfc426e95f806e429060181205316f2c45b4ac560e81c854ded5a45fd9dc3105414c01d504b3469a1294b
   languageName: node
   linkType: hard
 
@@ -3730,6 +3739,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-safe-filename@npm:^0.1.0":
+  version: 0.1.1
+  resolution: "is-safe-filename@npm:0.1.1"
+  checksum: 10c0/45c35d2253b96348e2c26590e14feed51d1e6b72aaa567930ccb34e68c0eef00ebcf3b7e01b46bf45e578a27355cd8f5bc12f7d6d79a34d33dc93d4560c0f6b6
+  languageName: node
+  linkType: hard
+
 "is-set@npm:^2.0.3":
   version: 2.0.3
   resolution: "is-set@npm:2.0.3"
@@ -3867,7 +3883,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"json-schema-typed@npm:^8.0.1":
+"json-schema-typed@npm:^8.0.2":
   version: 8.0.2
   resolution: "json-schema-typed@npm:8.0.2"
   checksum: 10c0/89f5e2fb1495483b705c027203c07277ee6bf2665165ad25a9cb55de5af7f72570326d13d32565180781e4083ad5c9688102f222baed7b353c2f39c1e02b0428
@@ -5139,7 +5155,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:^7.1.1, semver@npm:^7.2.1, semver@npm:^7.3.5, semver@npm:^7.6.3, semver@npm:^7.7.1, semver@npm:^7.7.2, semver@npm:^7.7.3":
+"semver@npm:^7.1.1, semver@npm:^7.2.1, semver@npm:^7.3.5, semver@npm:^7.6.3, semver@npm:^7.7.1, semver@npm:^7.7.2, semver@npm:^7.7.3, semver@npm:^7.8.5":
   version: 7.8.5
   resolution: "semver@npm:7.8.5"
   bin:
@@ -5633,7 +5649,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:^5.0.0, type-fest@npm:^5.0.1, type-fest@npm:^5.5.0":
+"type-fest@npm:^5.0.0, type-fest@npm:^5.10.0, type-fest@npm:^5.5.0":
   version: 5.10.0
   resolution: "type-fest@npm:5.10.0"
   dependencies:
@@ -5996,7 +6012,7 @@ __metadata:
     "@xhayper/discord-rpc": "npm:1.5.1"
     electron: "npm:44.5.1"
     electron-squirrel-startup: "npm:1.0.1"
-    electron-store: "npm:11.0.2"
+    electron-store: "npm:12.0.0"
     eslint: "npm:10.12.0"
     eslint-plugin-import: "npm:2.32.0"
     eslint-plugin-unused-imports: "npm:4.4.1"

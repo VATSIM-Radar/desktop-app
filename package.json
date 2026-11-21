@@ -31,7 +31,7 @@
     "@electron-forge/plugin-vite": "8.0.1",
     "@electron-forge/publisher-s3": "8.0.1",
     "@eslint/js": "10.0.1",
-    "@stylistic/eslint-plugin": "5.10.0",
+    "@stylistic/eslint-plugin": "6.0.1",
     "@types/electron-squirrel-startup": "1.0.2",
     "@types/ws": "8.18.2",
     "@typescript-eslint/parser": "8.72.0",
